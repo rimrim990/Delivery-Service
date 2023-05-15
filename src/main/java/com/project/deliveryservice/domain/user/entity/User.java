@@ -30,4 +30,8 @@ public class User extends ExtendedTimeEntity {
 
     @Embedded
     private Address address;
+
+    public boolean isEnabled() {
+        return getDeletedAt() == null;
+    }
 }
