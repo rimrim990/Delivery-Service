@@ -21,6 +21,9 @@ public class User extends ExtendedTimeEntity {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
+    private String username;
+
     @ManyToOne
     @JoinColumn(name = "level_id")
     private Level level;
