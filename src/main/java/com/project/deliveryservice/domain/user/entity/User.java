@@ -1,11 +1,12 @@
-package com.project.deliveryservice.domain.member.entity;
+package com.project.deliveryservice.domain.user.entity;
 
 import com.project.deliveryservice.common.entity.Address;
 import com.project.deliveryservice.common.entity.ExtendedTimeEntity;
 import jakarta.persistence.*;
 
 @Entity
-public class Member extends ExtendedTimeEntity {
+@Table(name = "user")
+public class User extends ExtendedTimeEntity {
     @Id @GeneratedValue
     private Long id;
 
