@@ -3,9 +3,14 @@ package com.project.deliveryservice.domain.user.entity;
 import com.project.deliveryservice.common.entity.Address;
 import com.project.deliveryservice.common.entity.ExtendedTimeEntity;
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "user")
+@Getter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends ExtendedTimeEntity {
     @Id @GeneratedValue
     private Long id;
