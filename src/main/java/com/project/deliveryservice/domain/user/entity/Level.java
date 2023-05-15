@@ -1,4 +1,4 @@
-package com.project.deliveryservice.domain.member.entity;
+package com.project.deliveryservice.domain.user.entity;
 
 import jakarta.persistence.*;
 
