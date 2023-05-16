@@ -1,5 +1,6 @@
 package com.project.deliveryservice.domain.user.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.deliveryservice.common.entity.Address;
 import com.project.deliveryservice.common.entity.ExtendedTimeEntity;
 import jakarta.persistence.*;
@@ -31,6 +32,7 @@ public class User extends ExtendedTimeEntity {
     @Embedded
     private Address address;
 
+    @JsonIgnore
     public boolean isEnabled() {
         return getDeletedAt() == null;
     }
