@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.Date;
 
 @Component
-public class JwtProvider {
+public class JwtTokenProvider {
 
     private static final long ONE_SECONDS = 1000;
     private static final long ONE_MINUTE = 60 * ONE_SECONDS;
@@ -22,7 +22,7 @@ public class JwtProvider {
     private final int expireMin;
     private final int refreshExpireMin;
 
-    public JwtProvider(
+    public JwtTokenProvider(
             @Value("${jwt.secret}") String secretKey,
             @Value("${jwt.expire-min}") int expireMin,
             @Value("${jwt.refresh-expire-min}") int refreshExpireMin) {
