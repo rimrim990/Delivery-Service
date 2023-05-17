@@ -1,5 +1,6 @@
 package com.project.deliveryservice.domain.auth.controller;
 
+import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.auth.service.AuthService;
 import com.project.deliveryservice.jwt.JwtTokenDto;
@@ -24,7 +25,7 @@ public class AuthController {
     }
 
     @PostMapping("/reissue")
-    public JwtTokenDto reissue(@RequestHeader("AUTHORIZATION_HEADER") String bearerToken) {
+    public JwtTokenDto reissue(@RequestHeader(value = AuthConstants.AUTHORIZATION_HEADER) String bearerToken) {
         return authService.reissue(bearerToken);
     }
 }
