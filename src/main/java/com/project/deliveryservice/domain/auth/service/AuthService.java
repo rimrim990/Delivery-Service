@@ -20,9 +20,9 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private UserRepository userRepository;
-    private JwtTokenProvider jwtTokenProvider;
-    private PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final PasswordEncoder passwordEncoder;
 
     public JwtTokenDto login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
