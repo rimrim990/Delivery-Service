@@ -41,7 +41,7 @@ public class AuthService {
             throw new JwtInvalidException("invalid grant type");
         }
 
-        Claims claims = jwtTokenProvider.parseClaimsFromRefreshToken(refreshToken);
+        Claims claims = jwtTokenProvider.parseClaimsFromJwtToken(refreshToken);
         if (claims == null) {
             throw new JwtInvalidException("claim not exist in token");
         }

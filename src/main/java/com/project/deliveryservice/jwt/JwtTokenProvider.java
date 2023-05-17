@@ -54,7 +54,7 @@ public class JwtTokenProvider {
         return createToken(email, authority, refreshExpireMin);
     }
 
-    public Claims parseClaimsFromRefreshToken(String jwt) {
+    public Claims parseClaimsFromJwtToken(String jwt) {
         Claims claims;
         try {
             claims = Jwts.parserBuilder()
