@@ -6,6 +6,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -47,6 +48,7 @@ class JwtAuthenticationProviderTest {
     }
 
     @Test
+    @DisplayName("지원하지 않는 Authentication 구현체를 인자로 support 를 호춣하면 false 를 반환한다.")
     public void givenNotSupportAuthentication_whenCallSupports_thenReturnFalse() {
 
         assertThat(provider.supports(UsernamePasswordAuthenticationToken.class), equalTo(false));
@@ -55,12 +57,14 @@ class JwtAuthenticationProviderTest {
     }
 
     @Test
+    @DisplayName("지원하는 Authentication 구현체를 인자로 support 를 호출하면 true 를 반환한다.")
     public void givenSupportAuthentication_whenCallSupports_thenReturnTrue() {
 
         assertThat(provider.supports(JwtAuthenticationToken.class), equalTo(true));
     }
 
     @Test
+    @DisplayName("다른 비밀키로 만든 토큰을 인자로 authentication 을 호출하면 JwtInvalidException 을 던진다.")
     public void givenTokenMadeByDifferentSecretKey_whenCallAuthentication_thenThrowJwtInvalidException() {
 
         String invalidSecretKey = "invalidSecretKeyInvalidInvalidInvalid";
@@ -74,6 +78,7 @@ class JwtAuthenticationProviderTest {
     }
 
     @Test
+    @DisplayName("만료된 토큰을 인자로 authentication 을 호출하면 JwtInvalidException 을 던진다.")
     public void givenExpiredToken_whenCallAuthentication_thenThrowJwtInvalidException() {
 
         Date past = new Date(System.currentTimeMillis() - ONE_MINUTE * 10);
@@ -87,6 +92,7 @@ class JwtAuthenticationProviderTest {
     }
 
     @Test
+    @DisplayName("잘못된 형식의 토큰을 인자로 authentication 을 호출하면 JwtInvalidException 을 던진다.")
     public void givenMalformedToken_whenCallAuthentication_thenThrowJwtInvalidException() {
 
         JwtAuthenticationToken authentication = new JwtAuthenticationToken("some malformed token here");
@@ -98,6 +104,7 @@ class JwtAuthenticationProviderTest {
     }
 
     @Test
+    @DisplayName("null 토큰 값을 인자로 authentication 을 호출하면 JwtInvalidException 을 던진다.")
     public void givenNullJwt_whenCallAuthentication_thenThrowJwtInvalidException() {
 
         JwtAuthenticationToken authentication = new JwtAuthenticationToken(null);
@@ -109,6 +116,7 @@ class JwtAuthenticationProviderTest {
     }
 
     @Test
+    @DisplayName("유효한 토큰을 인자로 authentication 을 호출하면 authentication 을 반환한다.")
     public void givenValidToken_whenCallAuthentication_thenReturnAuthentication() {
 
         String validToken = createToken("test", Collections.singletonList("ADMIN"), new Date(), 30, SECRET);
