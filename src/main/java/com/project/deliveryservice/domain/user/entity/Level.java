@@ -1,9 +1,10 @@
 package com.project.deliveryservice.domain.user.entity;
 
 import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
 
 @Entity
-public class Level {
+public class Level implements GrantedAuthority {
 
     @Id @GeneratedValue
     private Long id;
@@ -14,4 +15,9 @@ public class Level {
 
     @Enumerated(value = EnumType.STRING)
     private Grade grade;
+
+    @Override
+    public String getAuthority() {
+        return grade.toString();
+    }
 }
