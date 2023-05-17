@@ -1,9 +1,16 @@
 package com.project.deliveryservice.domain.user.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 
 @Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class Level implements GrantedAuthority {
 
     @Id @GeneratedValue
