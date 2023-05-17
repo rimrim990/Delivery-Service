@@ -21,6 +21,7 @@ public class SecurityConfig {
     private final String ROLE_NORMAL = "NORMAL";
     private final String ROLE_VIP = "VIP";
 
+    private final JwtAuthenticationProvider jwtAuthenticationProvider;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
     @Bean
@@ -50,12 +51,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager() {
-        this.authenticationManagerBuilder.authenticationProvider(jwtAuthenticationProvider());
+        this.authenticationManagerBuilder.authenticationProvider(jwtAuthenticationProvider);
         return authenticationManagerBuilder.getOrBuild();
-    }
-
-    @Bean
-    public JwtAuthenticationProvider jwtAuthenticationProvider() {
-        return new JwtAuthenticationProvider();
     }
 }
