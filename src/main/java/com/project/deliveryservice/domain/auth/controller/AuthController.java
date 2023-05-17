@@ -2,7 +2,7 @@ package com.project.deliveryservice.domain.auth.controller;
 
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.auth.service.AuthService;
-import com.project.deliveryservice.jwt.JwtDto;
+import com.project.deliveryservice.jwt.JwtTokenDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,12 +19,12 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public JwtDto login(LoginRequest request) {
+    public JwtTokenDto login(LoginRequest request) {
         return authService.login(request);
     }
 
     @PostMapping("/reissue")
-    public JwtDto reissue(@RequestHeader("AUTHORIZATION_HEADER") String bearerToken) {
+    public JwtTokenDto reissue(@RequestHeader("AUTHORIZATION_HEADER") String bearerToken) {
         return authService.reissue(bearerToken);
     }
 }

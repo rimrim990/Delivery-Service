@@ -4,9 +4,9 @@ import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.user.entity.User;
 import com.project.deliveryservice.domain.user.repository.UserRepository;
-import com.project.deliveryservice.jwt.JwtDto;
+import com.project.deliveryservice.jwt.JwtTokenDto;
 import com.project.deliveryservice.jwt.JwtInvalidException;
-import com.project.deliveryservice.jwt.JwtProvider;
+import com.project.deliveryservice.jwt.JwtTokenProvider;
 import com.project.deliveryservice.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +21,10 @@ import org.springframework.util.StringUtils;
 public class AuthService {
 
     private UserRepository userRepository;
-    private JwtProvider jwtProvider;
+    private JwtTokenProvider jwtTokenProvider;
     private PasswordEncoder passwordEncoder;
 
-    public JwtDto login(LoginRequest request) {
+    public JwtTokenDto login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException(request.getEmail() + " is not found"));
 
@@ -35,13 +35,13 @@ public class AuthService {
         return createJwtDto(user);
     }
 
-    public JwtDto reissue(String bearerToken) {
+    public JwtTokenDto reissue(String bearerToken) {
         String refreshToken = JwtUtils.resolveJwtToken(bearerToken);
         if (!StringUtils.hasText(refreshToken)) {
             throw new JwtInvalidException("invalid grant type");
         }
 
-        Claims claims = jwtProvider.parseClaimsFromRefreshToken(refreshToken);
+        Claims claims = jwtTokenProvider.parseClaimsFromRefreshToken(refreshToken);
         if (claims == null) {
             throw new JwtInvalidException("claim not exist in token");
         }
@@ -53,13 +53,13 @@ public class AuthService {
     }
 
 
-    private JwtDto createJwtDto(User user) {
+    private JwtTokenDto createJwtDto(User user) {
         String email = user.getEmail();
         String authority = user.getLevel().getAuthority();
-        return JwtDto.builder()
+        return JwtTokenDto.builder()
                 .grantType(AuthConstants.GRANT_TYPE_BEARER)
-                .accessToken(jwtProvider.createAccessToken(email, authority))
-                .refreshToken(jwtProvider.createRefreshToken(email, authority))
+                .accessToken(jwtTokenProvider.createAccessToken(email, authority))
+                .refreshToken(jwtTokenProvider.createRefreshToken(email, authority))
                 .build();
     }
 }
