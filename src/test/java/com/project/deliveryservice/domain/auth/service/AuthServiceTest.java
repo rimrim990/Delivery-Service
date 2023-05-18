@@ -1,6 +1,7 @@
 package com.project.deliveryservice.domain.auth.service;
 
 import com.project.deliveryservice.common.constants.AuthConstants;
+import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.user.entity.Grade;
 import com.project.deliveryservice.domain.user.entity.Level;
@@ -108,7 +109,7 @@ class AuthServiceTest {
     public void test_04() {
 
         Throwable throwable = assertThrows(JwtInvalidException.class, () -> authService.reissue("refreshToken"));
-        assertThat(throwable.getMessage(), equalTo("invalid grant type"));
+        assertThat(throwable.getMessage(), equalTo(ErrorMsg.INVALID_GRANT_TYPE));
     }
 
     @Test
@@ -118,7 +119,7 @@ class AuthServiceTest {
         when(mockJwtProvider.parseClaimsFromJwtToken("refreshToken")).thenReturn(null);
 
         Throwable throwable = assertThrows(JwtInvalidException.class, () -> authService.reissue("Bearer refreshToken"));
-        assertThat(throwable.getMessage(), equalTo("claim not exist in token"));
+        assertThat(throwable.getMessage(), equalTo(ErrorMsg.CLAIM_NOT_EXIST));
     }
 
     @Test

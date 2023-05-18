@@ -1,6 +1,7 @@
 package com.project.deliveryservice.jwt;
 
 import com.project.deliveryservice.common.constants.AuthConstants;
+import com.project.deliveryservice.common.exception.ErrorMsg;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -38,13 +39,13 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
                     .parseClaimsJws(((JwtAuthenticationToken) authentication).getJsonWebToken())
                     .getBody();
         } catch (SignatureException signatureException) {
-            throw new JwtInvalidException("signature key is different", signatureException);
+            throw new JwtInvalidException(ErrorMsg.DIFFERENT_SIGNATURE_KEY, signatureException);
         } catch (ExpiredJwtException expiredJwtException) {
-            throw new JwtInvalidException("expired token", expiredJwtException);
+            throw new JwtInvalidException(ErrorMsg.TOKEN_EXPIRED, expiredJwtException);
         } catch (MalformedJwtException malformedJwtException) {
-            throw new JwtInvalidException("malformed token", malformedJwtException);
+            throw new JwtInvalidException(ErrorMsg.TOKEN_MALFORMED, malformedJwtException);
         } catch (IllegalArgumentException illegalArgumentException) {
-            throw new JwtInvalidException("using illegal argument like null", illegalArgumentException);
+            throw new JwtInvalidException(ErrorMsg.ILLEGAL_TOKEN, illegalArgumentException);
         }
         return new JwtAuthenticationToken(claims.getSubject(), "", createGrantedAuthorities(claims));
     }

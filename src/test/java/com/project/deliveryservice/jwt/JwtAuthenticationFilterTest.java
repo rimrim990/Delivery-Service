@@ -1,6 +1,7 @@
 package com.project.deliveryservice.jwt;
 
 import com.project.deliveryservice.common.constants.AuthConstants;
+import com.project.deliveryservice.common.exception.ErrorMsg;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.BeforeEach;
@@ -103,7 +104,7 @@ class JwtAuthenticationFilterTest {
         mockRequest.addHeader(AuthConstants.AUTHORIZATION_HEADER, AuthConstants.BEARER_PREFIX +"valid_token");
         JwtAuthenticationToken token = new JwtAuthenticationToken("valid_token");
 
-        when(mockAuthenticationManager.authenticate(token)).thenThrow(new JwtInvalidException("time expired"));
+        when(mockAuthenticationManager.authenticate(token)).thenThrow(new JwtInvalidException(ErrorMsg.TOKEN_EXPIRED));
 
         // action
         filter.doFilterInternal(mockRequest, mockResponse, mockFilterChain);
