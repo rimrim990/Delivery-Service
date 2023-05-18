@@ -30,7 +30,7 @@ public class AuthService {
                 .orElseThrow(() -> new UsernameNotFoundException(request.getEmail() + " is not found"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new BadCredentialsException("password is not match");
+            throw new BadCredentialsException(ErrorMsg.PASSWORD_NOT_MATCH);
         }
 
         return createJwtDto(user);
