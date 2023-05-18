@@ -13,4 +13,6 @@ public class ErrorMsg {
     public static final String INVALID_GRANT_TYPE = "invalid grant type";
 
     public static final String CLAIM_NOT_EXIST = "claim not exist in token";
+
+    public static final String PASSWORD_NOT_MATCH = "password does not match";
 }

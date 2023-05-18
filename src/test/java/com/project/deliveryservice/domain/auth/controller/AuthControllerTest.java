@@ -3,6 +3,7 @@ package com.project.deliveryservice.domain.auth.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.deliveryservice.common.constants.AuthConstants;
+import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.user.entity.Grade;
 import com.project.deliveryservice.domain.user.entity.Level;
@@ -32,8 +33,10 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest()
@@ -106,7 +109,9 @@ class AuthControllerTest {
                 post("/api/auth/login")
                         .content(requestContent)
                         .contentType("application/json"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("test is not found"));
     }
 
     @Test
@@ -121,7 +126,9 @@ class AuthControllerTest {
                 post("/api/auth/login")
                         .content(requestContent)
                         .contentType("application/json"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value(ErrorMsg.PASSWORD_NOT_MATCH));
     }
 
     @Test
@@ -170,7 +177,9 @@ class AuthControllerTest {
                         post("/api/auth/reissue")
                                 .header(AuthConstants.AUTHORIZATION_HEADER, refreshToken)
                 )
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value(ErrorMsg.INVALID_GRANT_TYPE));
     }
 
     @Test
@@ -209,6 +218,8 @@ class AuthControllerTest {
                         post("/api/auth/reissue")
                                 .header(AuthConstants.AUTHORIZATION_HEADER, AuthConstants.BEARER_PREFIX + accessToken))
                 .andExpect(status().isForbidden())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value(ErrorMsg.DIFFERENT_SIGNATURE_KEY))
                 .andReturn();
     }
 }
