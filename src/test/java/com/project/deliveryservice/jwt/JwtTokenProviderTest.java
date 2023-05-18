@@ -21,7 +21,7 @@ class JwtTokenProviderTest {
 
     @Test
     @DisplayName("accessToken 값을 기반으로 생성된 claim 은 토큰과 동일한 값을 갖는다.")
-    public void givenUser_whenCreateAccessTokenByUser_thenParsedClaimsWithSameValue() {
+    public void test_01() {
 
         String jwt = jwtTokenProvider.createAccessToken("test", "Admin");
 
@@ -37,7 +37,7 @@ class JwtTokenProviderTest {
 
     @Test
     @DisplayName("refreshToken 값을 기반으로 생성된 claim 은 토큰과 동일한 값을 갖는다.")
-    public void givenUser_whenCreateRefreshTokenByUser_thenParsedClaimsWIthSameValue() {
+    public void test_02() {
 
         String jwt = jwtTokenProvider.createRefreshToken("test", "Admin");
 
@@ -53,7 +53,7 @@ class JwtTokenProviderTest {
 
     @Test
     @DisplayName("유효하지 않은 refreshToken 이 주어지면 claim 파싱 과정에서 JwtInvalidException 을 던진다.")
-    public void givenInvalidRefreshToken_whenParseClaimsFromJwtToken_thenThrowJwtInvalidException() {
+    public void test_03() {
 
         String invalidRefreshToken = "invalid refresh token";
 

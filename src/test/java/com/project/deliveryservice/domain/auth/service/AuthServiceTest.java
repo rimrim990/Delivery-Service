@@ -59,7 +59,7 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("로그인 시 사용자 이름이 존재하지 않으면 UsernameNotFoundException 던진다.")
-    public void givenNotExistUserName_whenLogin_thenThrowUsernameNotFoundException() {
+    public void test_01() {
 
         LoginRequest loginRequest = new LoginRequest("test", "1234");
 
@@ -71,7 +71,7 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("로그인 요청 시 비밀번호가 존재하지 읂여먼 BadCredentialsException 던진다.")
-    public void givenNotMatchedPassword_whenLogin_thenThrowBadCredentialsException() {
+    public void test_02() {
 
         LoginRequest loginRequest = new LoginRequest("test", "1234");
         when(mockUserRepository.findByEmail("test")).thenReturn(
@@ -88,7 +88,7 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("유효한 로그인 요청이 들어오면 JwtTokenDto 를 반환한다.")
-    public void givenValidLoginRequest_whenLogin_thenReturnJwtTokenDto() {
+    public void test_03() {
 
         LoginRequest loginRequest = new LoginRequest("test", "1234");
         User user = getUser("test", "1234", "ADMIN");
@@ -105,7 +105,7 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("토큰 재발급시 인증타입이 유효하지 않으면 JwtInvalidException 을 던진다.")
-    public void givenInvalidGrandType_whenReissue_thenThrowJwtInvalidException() {
+    public void test_04() {
 
         Throwable throwable = assertThrows(JwtInvalidException.class, () -> authService.reissue("refreshToken"));
         assertThat(throwable.getMessage(), equalTo("invalid grant type"));
@@ -113,7 +113,7 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("토큰 재발급시 claim 이 null 이면 JwtInvalidException 을 던진다.")
-    public void givenNullClaims_whenReissue_thenThrowJwtInvalidException() {
+    public void test_05() {
 
         when(mockJwtProvider.parseClaimsFromJwtToken("refreshToken")).thenReturn(null);
 
@@ -123,7 +123,7 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("토큰 재발급시 유효한 refreshToken 이 주어지면 JwtTokenDto 를 반환한다.")
-    public void givenValidRefreshToken_whenReissue_thenJwtTokenDto() {
+    public void test_06() {
 
         User user = getUser("test", "1234", "ADMIN");
         Claims claims = Jwts.claims().setSubject("test");
