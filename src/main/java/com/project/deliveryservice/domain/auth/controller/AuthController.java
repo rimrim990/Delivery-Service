@@ -18,11 +18,13 @@ public class AuthController {
 
     @PostMapping("/login")
     public JwtTokenDto login(@RequestBody LoginRequest request) {
+        log.info("login requested with email " + request.getEmail());
         return authService.login(request);
     }
 
     @PostMapping("/reissue")
     public JwtTokenDto reissue(@RequestHeader(value = AuthConstants.AUTHORIZATION_HEADER) String bearerToken) {
+        log.info("reissue requested with refreshToken " + bearerToken);
         return authService.reissue(bearerToken);
     }
 }
