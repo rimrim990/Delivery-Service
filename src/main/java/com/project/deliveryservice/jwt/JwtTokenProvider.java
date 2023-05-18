@@ -2,9 +2,8 @@ package com.project.deliveryservice.jwt;
 
 import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.common.exception.ErrorMsg;
+import com.project.deliveryservice.utils.JwtUtils;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -30,16 +29,11 @@ public class JwtTokenProvider {
             @Value("${jwt.expire-min}") int expireMin,
             @Value("${jwt.refresh-expire-min}") int refreshExpireMin) {
 
-        this.key = generateKey(secretKey);
-        this.refreshKey = generateKey(refreshSecretKey);
+        this.key = JwtUtils.generateKey(secretKey);
+        this.refreshKey = JwtUtils.generateKey(refreshSecretKey);
 
         this.expireMin = expireMin;
         this.refreshExpireMin = refreshExpireMin;
-    }
-
-    private Key generateKey(String key) {
-        byte[] keyBytes = Decoders.BASE64URL.decode(key);
-        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String createToken(String email, String authority, Key key, int expireMin) {

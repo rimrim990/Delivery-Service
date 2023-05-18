@@ -2,6 +2,7 @@ package com.project.deliveryservice.jwt;
 
 import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.common.exception.ErrorMsg;
+import com.project.deliveryservice.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -15,6 +16,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
+import java.security.Key;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -23,10 +25,10 @@ import java.util.List;
 @Component
 public class JwtAuthenticationProvider implements AuthenticationProvider {
 
-    private final byte[] secretKeyBytes;
+    private final Key secretKey;
 
     public JwtAuthenticationProvider(@Value("${jwt.secret}") String secretKey) {
-        this.secretKeyBytes = secretKey.getBytes();
+        this.secretKey = JwtUtils.generateKey(secretKey);
     }
 
     @Override
@@ -34,7 +36,7 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
         Claims claims;
         try {
             claims = Jwts.parserBuilder()
-                    .setSigningKey(secretKeyBytes)
+                    .setSigningKey(secretKey)
                     .build()
                     .parseClaimsJws(((JwtAuthenticationToken) authentication).getJsonWebToken())
                     .getBody();
