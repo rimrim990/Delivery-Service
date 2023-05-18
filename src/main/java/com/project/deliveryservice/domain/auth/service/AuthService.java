@@ -42,7 +42,7 @@ public class AuthService {
             throw new JwtInvalidException(ErrorMsg.INVALID_GRANT_TYPE);
         }
 
-        Claims claims = jwtTokenProvider.parseClaimsFromJwtToken(refreshToken);
+        Claims claims = jwtTokenProvider.parseClaimsFromRefreshToken(refreshToken);
         if (claims == null) {
             throw new JwtInvalidException(ErrorMsg.CLAIM_NOT_EXIST);
         }

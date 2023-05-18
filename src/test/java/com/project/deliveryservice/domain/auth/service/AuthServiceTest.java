@@ -84,7 +84,7 @@ class AuthServiceTest {
         Throwable throwable = assertThrows(BadCredentialsException.class, () -> authService.login(loginRequest));
 
         assertThat(throwable, isA(BadCredentialsException.class));
-        assertThat(throwable.getMessage(), equalTo("password is not match"));
+        assertThat(throwable.getMessage(), equalTo(ErrorMsg.PASSWORD_NOT_MATCH));
     }
 
     @Test
@@ -116,7 +116,7 @@ class AuthServiceTest {
     @DisplayName("토큰 재발급시 claim 이 null 이면 JwtInvalidException 을 던진다.")
     public void test_05() {
 
-        when(mockJwtProvider.parseClaimsFromJwtToken("refreshToken")).thenReturn(null);
+        when(mockJwtProvider.parseClaimsFromRefreshToken("refreshToken")).thenReturn(null);
 
         Throwable throwable = assertThrows(JwtInvalidException.class, () -> authService.reissue("Bearer refreshToken"));
         assertThat(throwable.getMessage(), equalTo(ErrorMsg.CLAIM_NOT_EXIST));
@@ -131,7 +131,7 @@ class AuthServiceTest {
         claims.put(AuthConstants.KEY_ROLES, Collections.singleton("ADMIN"));
 
         when(mockUserRepository.findByEmail("test")).thenReturn(Optional.of(user));
-        when(mockJwtProvider.parseClaimsFromJwtToken("refreshToken")).thenReturn(claims);
+        when(mockJwtProvider.parseClaimsFromRefreshToken("refreshToken")).thenReturn(claims);
         when(mockJwtProvider.createAccessToken("test", "ADMIN")).thenReturn("accessToken");
         when(mockJwtProvider.createRefreshToken("test", "ADMIN")).thenReturn("refreshToken");
 

@@ -20,22 +20,29 @@ public class JwtTokenProvider {
     private static final long ONE_MINUTE = 60 * ONE_SECONDS;
 
     private final Key key;
+    private final Key refreshKey;
     private final int expireMin;
     private final int refreshExpireMin;
 
     public JwtTokenProvider(
             @Value("${jwt.secret}") String secretKey,
+            @Value("${jwt.refresh-secret}") String refreshSecretKey,
             @Value("${jwt.expire-min}") int expireMin,
             @Value("${jwt.refresh-expire-min}") int refreshExpireMin) {
 
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        this.key = Keys.hmacShaKeyFor(keyBytes);
+        this.key = generateKey(secretKey);
+        this.refreshKey = generateKey(refreshSecretKey);
 
         this.expireMin = expireMin;
         this.refreshExpireMin = refreshExpireMin;
     }
 
-    public String createToken(String email, String authority, int expireMin) {
+    private Key generateKey(String key) {
+        byte[] keyBytes = Decoders.BASE64URL.decode(key);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public String createToken(String email, String authority, Key key, int expireMin) {
         Date now = new Date();
         Claims claims = Jwts.claims().setSubject(email);
         claims.put(AuthConstants.KEY_ROLES, Collections.singleton(authority));
@@ -48,18 +55,18 @@ public class JwtTokenProvider {
     }
 
     public String createAccessToken(String email, String authority) {
-        return createToken(email, authority, expireMin);
+        return createToken(email, authority, key, expireMin);
     }
 
     public String createRefreshToken(String email, String authority) {
-        return createToken(email, authority, refreshExpireMin);
+        return createToken(email, authority, refreshKey, refreshExpireMin);
     }
 
-    public Claims parseClaimsFromJwtToken(String jwt) {
+    public Claims parseClaimsFromRefreshToken(String jwt) {
         Claims claims;
         try {
             claims = Jwts.parserBuilder()
-                    .setSigningKey(key)
+                    .setSigningKey(refreshKey)
                     .build()
                     .parseClaimsJws(jwt)
                     .getBody();
