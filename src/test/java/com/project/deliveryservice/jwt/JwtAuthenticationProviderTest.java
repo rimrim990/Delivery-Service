@@ -9,6 +9,8 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,11 +26,13 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.isA;
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
 class JwtAuthenticationProviderTest {
 
     final int ONE_SECONDS = 1000;
     final int ONE_MINUTE = 60 * ONE_SECONDS;
-    final String SECRET = "aGVlbG9hc2RqZmtsc2FqO2xrdmphbGtkZmo7ZGtmamFsZGZqa2FkYWxqa2xhaztqZmthc2RmYXNkZmFzZGZhc2RmYXNkZmFzZGZhZHNzZGZhc2ZkYXNmZGFzZGZhc2Rmc2RmYQ==";
+    @Value("${jwt.secret}")
+    String SECRET;
 
     JwtAuthenticationProvider provider;
 
