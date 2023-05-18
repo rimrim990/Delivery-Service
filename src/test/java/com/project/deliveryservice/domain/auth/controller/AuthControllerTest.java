@@ -1,6 +1,7 @@
 package com.project.deliveryservice.domain.auth.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.common.exception.ErrorMsg;
@@ -9,8 +10,10 @@ import com.project.deliveryservice.domain.user.entity.Grade;
 import com.project.deliveryservice.domain.user.entity.Level;
 import com.project.deliveryservice.domain.user.entity.User;
 import com.project.deliveryservice.domain.user.repository.UserRepository;
+import com.project.deliveryservice.jwt.JwtInvalidException;
 import com.project.deliveryservice.jwt.JwtTokenDto;
 import com.project.deliveryservice.jwt.JwtTokenProvider;
+import com.project.deliveryservice.utils.ApiUtils.ApiResponse;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -18,9 +21,10 @@ import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -49,11 +53,13 @@ class AuthControllerTest {
     PasswordEncoder passwordEncoder;
     @Autowired
     ObjectMapper objectMapper;
+    @Value("${jwt.secret}")
+    String secretKey;
 
-    @SpyBean
-    JwtTokenProvider spyJwtTokenProvider;
-    @SpyBean
-    UserRepository spyUserRepository;
+    @MockBean
+    JwtTokenProvider mockJwtTokenProvider;
+    @MockBean
+    UserRepository mockUserRepository;
 
     private static final int ONE_SECONDS = 1000;
     private static final int ONE_MINUTE = 60 * ONE_SECONDS;
@@ -77,7 +83,7 @@ class AuthControllerTest {
                 .setClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + ONE_MINUTE * expireMin))
-                .signWith(key, SignatureAlgorithm.HS256)
+                .signWith(key, SignatureAlgorithm.HS512)
                 .compact();
     }
 
@@ -87,15 +93,13 @@ class AuthControllerTest {
     }
 
     private String getAccessToken() {
-        String secret = "jwtaccesstokenrandomcustomkeybytes";
-        Key key = Keys.hmacShaKeyFor(secret.getBytes());
-        return createToken("test", Collections.singletonList("ADMIN"), new Date(), 10, key);
+        Key key = Keys.hmacShaKeyFor(secretKey.getBytes());
+        return createToken("test", Collections.singletonList("ADMIN"), new Date(), 30, key);
     }
 
     private String getRefreshToken() {
-        String secret = "jwtaccesstokenrandomcustomkeybytes";
-        Key key = Keys.hmacShaKeyFor(secret.getBytes());
-        return createToken("test", Collections.singletonList("ADMIN"), new Date(), 30, key);
+        Key key = Keys.hmacShaKeyFor(secretKey.getBytes());
+        return createToken("test", Collections.singletonList("ADMIN"), new Date(), 10080, key);
     }
 
     @Test
@@ -103,7 +107,7 @@ class AuthControllerTest {
     public void test_01() throws Exception {
 
         String requestContent = getLoginRequest("test", "1234");
-        when(spyUserRepository.findByEmail("test")).thenReturn(Optional.empty());
+        when(mockUserRepository.findByEmail("test")).thenReturn(Optional.empty());
 
         mockMvc.perform(
                 post("/api/auth/login")
@@ -120,7 +124,7 @@ class AuthControllerTest {
 
         User user = getUser("test", "1234", "ADMIN");
         String requestContent = getLoginRequest("test", "12345");
-        when(spyUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
+        when(mockUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
 
         mockMvc.perform(
                 post("/api/auth/login")
@@ -137,24 +141,27 @@ class AuthControllerTest {
 
         User user = getUser("test", "1234", "ADMIN");
         String requestContent = getLoginRequest("test", "1234");
-        when(spyUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
+        when(mockUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
 
         String accessToken = getAccessToken();
         String refreshToken = getRefreshToken();
-        when(spyJwtTokenProvider.createAccessToken("email", "ADMIN")).thenReturn(accessToken);
-        when(spyJwtTokenProvider.createRefreshToken("email", "ADMIN")).thenReturn(refreshToken);
+        when(mockJwtTokenProvider.createAccessToken("test", "ADMIN")).thenReturn(accessToken);
+        when(mockJwtTokenProvider.createRefreshToken("test", "ADMIN")).thenReturn(refreshToken);
+        when(mockJwtTokenProvider.parseClaimsFromJwtToken(refreshToken)).thenReturn(Jwts.claims().setSubject("test"));
 
         MvcResult mvcResult = mockMvc.perform(
                 post("/api/auth/login")
                         .content(requestContent)
                         .contentType("application/json"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("errorMsg").value(nullValue()))
                 .andReturn();
 
-        JwtTokenDto jwtTokenDto = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), JwtTokenDto.class);
-        assertThat(jwtTokenDto.getAccessToken(), equalTo(accessToken));
-        assertThat(jwtTokenDto.getRefreshToken(), equalTo(refreshToken));
-        assertThat(jwtTokenDto.getGrantType(), equalTo(AuthConstants.GRANT_TYPE_BEARER));
+        JavaType javaType = objectMapper.getTypeFactory().constructParametricType(ApiResponse.class, JwtTokenDto.class);
+        ApiResponse<JwtTokenDto> res = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), javaType);
+        assertThat(res.getData().getAccessToken(), equalTo(accessToken));
+        assertThat(res.getData().getRefreshToken(), equalTo(refreshToken));
+        assertThat(res.getData().getGrantType(), equalTo(AuthConstants.GRANT_TYPE_BEARER));
     }
 
     @Test
@@ -187,21 +194,27 @@ class AuthControllerTest {
     public void test_06() throws Exception {
 
         User user = getUser("test", "1234", "ADMIN");
-        when(spyUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
+        when(mockUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
 
         String accessToken = getAccessToken();
         String refreshToken = getRefreshToken();
+        when(mockJwtTokenProvider.createAccessToken("test", "ADMIN")).thenReturn(accessToken);
+        when(mockJwtTokenProvider.createRefreshToken("test", "ADMIN")).thenReturn(refreshToken);
+        when(mockJwtTokenProvider.parseClaimsFromJwtToken(refreshToken))
+                .thenReturn(Jwts.claims().setSubject("test"));
 
         MvcResult mvcResult = mockMvc.perform(
                 post("/api/auth/reissue")
                         .header(AuthConstants.AUTHORIZATION_HEADER, AuthConstants.BEARER_PREFIX + refreshToken))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("errorMsg").value(nullValue()))
                 .andReturn();
 
-        JwtTokenDto jwtTokenDto = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), JwtTokenDto.class);
-        assertThat(jwtTokenDto.getAccessToken(), equalTo(accessToken));
-        assertThat(jwtTokenDto.getRefreshToken(), equalTo(refreshToken));
-        assertThat(jwtTokenDto.getGrantType(), equalTo(AuthConstants.GRANT_TYPE_BEARER));
+        JavaType javaType = objectMapper.getTypeFactory().constructParametricType(ApiResponse.class, JwtTokenDto.class);
+        ApiResponse<JwtTokenDto> res = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), javaType);
+        assertThat(res.getData().getAccessToken(), equalTo(accessToken));
+        assertThat(res.getData().getRefreshToken(), equalTo(refreshToken));
+        assertThat(res.getData().getGrantType(), equalTo(AuthConstants.GRANT_TYPE_BEARER));
 
     }
 
@@ -209,10 +222,11 @@ class AuthControllerTest {
     @DisplayName("토큰 재발급시 accessToken 이 주어지면 Forbidden 상태를 반환한다.")
     public void test_07() throws Exception {
 
-        User user = getUser("test", "1234", "ADMIN");
-        when(spyUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
-
         String accessToken = getAccessToken();
+        User user = getUser("test", "1234", "ADMIN");
+        when(mockUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
+        when(mockJwtTokenProvider.parseClaimsFromJwtToken(accessToken))
+                .thenThrow(new JwtInvalidException(ErrorMsg.DIFFERENT_SIGNATURE_KEY));
 
         mockMvc.perform(
                         post("/api/auth/reissue")
