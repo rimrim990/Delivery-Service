@@ -147,7 +147,7 @@ class AuthControllerTest {
         String refreshToken = getRefreshToken();
         when(mockJwtTokenProvider.createAccessToken("test", "ADMIN")).thenReturn(accessToken);
         when(mockJwtTokenProvider.createRefreshToken("test", "ADMIN")).thenReturn(refreshToken);
-        when(mockJwtTokenProvider.parseClaimsFromJwtToken(refreshToken)).thenReturn(Jwts.claims().setSubject("test"));
+        when(mockJwtTokenProvider.parseClaimsFromRefreshToken(refreshToken)).thenReturn(Jwts.claims().setSubject("test"));
 
         MvcResult mvcResult = mockMvc.perform(
                 post("/api/auth/login")
@@ -200,7 +200,7 @@ class AuthControllerTest {
         String refreshToken = getRefreshToken();
         when(mockJwtTokenProvider.createAccessToken("test", "ADMIN")).thenReturn(accessToken);
         when(mockJwtTokenProvider.createRefreshToken("test", "ADMIN")).thenReturn(refreshToken);
-        when(mockJwtTokenProvider.parseClaimsFromJwtToken(refreshToken))
+        when(mockJwtTokenProvider.parseClaimsFromRefreshToken(refreshToken))
                 .thenReturn(Jwts.claims().setSubject("test"));
 
         MvcResult mvcResult = mockMvc.perform(
@@ -225,7 +225,7 @@ class AuthControllerTest {
         String accessToken = getAccessToken();
         User user = getUser("test", "1234", "ADMIN");
         when(mockUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
-        when(mockJwtTokenProvider.parseClaimsFromJwtToken(accessToken))
+        when(mockJwtTokenProvider.parseClaimsFromRefreshToken(accessToken))
                 .thenThrow(new JwtInvalidException(ErrorMsg.DIFFERENT_SIGNATURE_KEY));
 
         mockMvc.perform(
