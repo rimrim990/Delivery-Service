@@ -174,6 +174,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("유효한 refreshToken 을 가지고 토큰 재발급을 요청하면 jwtTokenDto 를 반환한다.")
     public void test_06() throws Exception {
 
         User user = getUser("test", "1234", "ADMIN");
