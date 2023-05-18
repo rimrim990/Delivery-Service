@@ -44,7 +44,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     @DisplayName("헤더에 토큰 값이 없으면 AuthenticationManager 는 호출되지 않는다.")
-    public void givenTokenNotInHeader_whenDoFilterInternal_thenAuthenticationManagerNotBeenCalled() throws ServletException, IOException {
+    public void test_01() throws ServletException, IOException {
 
         // setup
         when(mockAuthenticationManager.authenticate(any())).thenReturn(null);
@@ -59,7 +59,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     @DisplayName("헤더 토큰이 유효하지 않으면 AuthenticationManager 는 호출되지 않는다.")
-    public void givenInvalidTokenHeader_whenDoFilterInternal_thenAuthenticationManagerNotBeenCalled() throws ServletException, IOException {
+    public void test_02() throws ServletException, IOException {
 
         // setup
         mockRequest.addHeader(AuthConstants.AUTHORIZATION_HEADER, "invalid token");
@@ -75,7 +75,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     @DisplayName("authenticate 가 null 을 반환하면 SecurityContextHolder 는 null 값을 보유한다.")
-    public void givenReturnNullAfterAuthenticateWithValidToken_whenDoFilterInternal_thenAuthenticationFromSecurityContextHolderIsNull() throws ServletException, IOException {
+    public void test_03() throws ServletException, IOException {
 
         // setup
         mockRequest.addHeader(AuthConstants.AUTHORIZATION_HEADER, AuthConstants.BEARER_PREFIX + "valid_token");
@@ -92,7 +92,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     @DisplayName("AuthenticationException 이 던져지면 SecurityContextHolder 는 null 을 보유하고 clearContext 가 호출된다.")
-    public void givenThrowAuthenticationException_whenDoFilterInternal_thenSecurityContextHolderIsNullAndClearContextBeenCalled() throws ServletException, IOException {
+    public void test_04() throws ServletException, IOException {
 
         // setup
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
@@ -118,7 +118,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     @DisplayName("유효한 토큰이 주어지면 SecurityContextHolder 는 Authentication 을 보유한다.")
-    public void givenValidToken_whenDoFilterInternal_thenSecurityContextHasAuthentication() throws ServletException, IOException {
+    public void test_05() throws ServletException, IOException {
 
         // setup
         mockRequest.addHeader(AuthConstants.AUTHORIZATION_HEADER, AuthConstants.BEARER_PREFIX + "valid_token");

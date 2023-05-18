@@ -97,7 +97,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("존재하지 않는 사용자 정보로 로그인을 요청하면 Forbidden 상태를 반환한다.")
-    public void givenNotExistsLoginRequest_whenLogin_thenIsForbidden() throws Exception {
+    public void test_01() throws Exception {
 
         String requestContent = getLoginRequest("test", "1234");
         when(spyUserRepository.findByEmail("test")).thenReturn(Optional.empty());
@@ -111,7 +111,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("일치하지 않는 비밀번호로 로그인 요청을 보내면 Forbidden 상태를 반환한다.")
-    public void givenNotMatchedPassword_whenLogin_thenIsForbidden() throws Exception {
+    public void test_02() throws Exception {
 
         User user = getUser("test", "1234", "ADMIN");
         String requestContent = getLoginRequest("test", "12345");
@@ -126,7 +126,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("유효한 로그인 요청이 들어오면 JwtTokenDto 를 반환한다.")
-    public void givenValidLoginRequest_whenLogin_thenReturnJwtTokenDto() throws Exception {
+    public void test_03() throws Exception {
 
         User user = getUser("test", "1234", "ADMIN");
         String requestContent = getLoginRequest("test", "1234");
@@ -152,7 +152,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("인증되지 않은 사용자가 토큰 재발급을 요청하면 BadRequest 상태를 반환한다.")
-    public void givenWithoutAuthorization_whenReissue_thenIsBadRequest() throws Exception {
+    public void test_04() throws Exception {
 
         mockMvc.perform(
                 post("/api/auth/reissue")
@@ -162,7 +162,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("토근 재발급시 헤더 토큰이 Bearer 타입이 아니면 Forbidden 상태를 반환한다.")
-    public void givenNotBearerToken_whenReissue_thenIsForbidden() throws Exception {
+    public void test_05() throws Exception {
 
         String refreshToken = getRefreshToken();
 
@@ -174,7 +174,7 @@ class AuthControllerTest {
     }
 
     @Test
-    public void givenRefreshToken_whenReissue_thenReturnAccessToken() throws Exception {
+    public void test_06() throws Exception {
 
         User user = getUser("test", "1234", "ADMIN");
         when(spyUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
