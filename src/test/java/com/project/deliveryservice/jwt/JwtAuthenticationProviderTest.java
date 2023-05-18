@@ -1,6 +1,7 @@
 package com.project.deliveryservice.jwt;
 
 import com.project.deliveryservice.common.constants.AuthConstants;
+import com.project.deliveryservice.common.exception.ErrorMsg;
 import io.jsonwebtoken.Claims;
 
 import io.jsonwebtoken.Jwts;
@@ -112,7 +113,7 @@ class JwtAuthenticationProviderTest {
         Throwable throwable = assertThrows(JwtInvalidException.class, () -> provider.authenticate(authentication));
 
         assertThat(throwable, isA(JwtInvalidException.class));
-        assertThat(throwable.getMessage(), equalTo("using illegal argument like null"));
+        assertThat(throwable.getMessage(), equalTo(ErrorMsg.ILLEGAL_TOKEN));
     }
 
     @Test

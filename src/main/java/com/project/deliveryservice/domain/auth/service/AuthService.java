@@ -1,6 +1,7 @@
 package com.project.deliveryservice.domain.auth.service;
 
 import com.project.deliveryservice.common.constants.AuthConstants;
+import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.user.entity.User;
 import com.project.deliveryservice.domain.user.repository.UserRepository;
@@ -38,12 +39,12 @@ public class AuthService {
     public JwtTokenDto reissue(String bearerToken) {
         String refreshToken = JwtUtils.resolveJwtToken(bearerToken);
         if (!StringUtils.hasText(refreshToken)) {
-            throw new JwtInvalidException("invalid grant type");
+            throw new JwtInvalidException(ErrorMsg.INVALID_GRANT_TYPE);
         }
 
         Claims claims = jwtTokenProvider.parseClaimsFromJwtToken(refreshToken);
         if (claims == null) {
-            throw new JwtInvalidException("claim not exist in token");
+            throw new JwtInvalidException(ErrorMsg.CLAIM_NOT_EXIST);
         }
 
         User user = userRepository.findByEmail(claims.getSubject())
