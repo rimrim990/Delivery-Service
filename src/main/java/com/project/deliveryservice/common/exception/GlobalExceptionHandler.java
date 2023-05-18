@@ -4,6 +4,8 @@ import com.project.deliveryservice.jwt.JwtInvalidException;
 import com.project.deliveryservice.utils.ApiUtils.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -17,5 +19,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.
                 status(HttpStatus.FORBIDDEN)
                 .body(fail(e.getMessage()));
+    }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ApiResponse> handleUsernameNotFoundException(UsernameNotFoundException e) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(fail(e.getMessage()));
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiResponse> handleBadCredentialsException(BadCredentialsException e) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(fail(e.getMessage()));
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponse> handleRuntimeException() {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(fail("internal server error"));
     }
 }
