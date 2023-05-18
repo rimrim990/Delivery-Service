@@ -61,4 +61,16 @@ class JwtTokenProviderTest {
 
         assertThat(throwable.getMessage(), equalTo("malformed token"));
     }
+
+    @Test
+    @DisplayName("refreshToken 에서 claim 추출 시 accessToken 이 들어오면 JwtInvalidException 을 던진다.")
+    public void test_04() {
+
+        String accessToken = jwtTokenProvider.createAccessToken("test", "ADMIN");
+
+        Throwable throwable = assertThrows(JwtInvalidException.class, () -> jwtTokenProvider.parseClaimsFromJwtToken(accessToken));
+
+        assertThat(throwable, isA(JwtInvalidException.class));
+        assertThat(throwable.getMessage(), equalTo("invalid signature"));
+    }
 }

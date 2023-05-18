@@ -194,4 +194,20 @@ class AuthControllerTest {
         assertThat(jwtTokenDto.getGrantType(), equalTo(AuthConstants.GRANT_TYPE_BEARER));
 
     }
+
+    @Test
+    @DisplayName("토큰 재발급시 accessToken 이 주어지면 Forbidden 상태를 반환한다.")
+    public void test_07() throws Exception {
+
+        User user = getUser("test", "1234", "ADMIN");
+        when(spyUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
+
+        String accessToken = getAccessToken();
+
+        mockMvc.perform(
+                        post("/api/auth/reissue")
+                                .header(AuthConstants.AUTHORIZATION_HEADER, AuthConstants.BEARER_PREFIX + accessToken))
+                .andExpect(status().isForbidden())
+                .andReturn();
+    }
 }
