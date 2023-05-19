@@ -1,8 +1,12 @@
 package com.project.deliveryservice.utils;
 
 import com.project.deliveryservice.common.constants.AuthConstants;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.util.StringUtils;
+
+import java.security.Key;
 
 public class JwtUtils {
 
@@ -25,5 +29,10 @@ public class JwtUtils {
 
     private static String getTokenFromHeader(HttpServletRequest request) {
         return request.getHeader(AuthConstants.AUTHORIZATION_HEADER);
+    }
+
+    public static Key generateKey(String secretKey) {
+        byte[] secretKeyByte = Decoders.BASE64.decode(secretKey);
+        return Keys.hmacShaKeyFor(secretKeyByte);
     }
 }
