@@ -13,7 +13,7 @@ import org.springframework.security.core.GrantedAuthority;
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class Level implements GrantedAuthority {
 
-    @Id @GeneratedValue
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
@@ -21,10 +21,10 @@ public class Level implements GrantedAuthority {
     private int policy;
 
     @Enumerated(value = EnumType.STRING)
-    private Grade grade;
+    private Role role;
 
     @Override
     public String getAuthority() {
-        return grade.toString();
+        return role.toString();
     }
 }
