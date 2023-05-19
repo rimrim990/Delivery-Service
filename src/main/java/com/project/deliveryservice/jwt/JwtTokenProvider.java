@@ -1,10 +1,8 @@
 package com.project.deliveryservice.jwt;
 
 import com.project.deliveryservice.common.constants.AuthConstants;
-import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.utils.JwtUtils;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.SignatureException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -57,22 +55,6 @@ public class JwtTokenProvider {
     }
 
     public Claims parseClaimsFromRefreshToken(String jwt) {
-        Claims claims;
-        try {
-            claims = Jwts.parserBuilder()
-                    .setSigningKey(refreshKey)
-                    .build()
-                    .parseClaimsJws(jwt)
-                    .getBody();
-        } catch (SignatureException signatureException) {
-            throw new JwtInvalidException(ErrorMsg.DIFFERENT_SIGNATURE_KEY, signatureException);
-        } catch (ExpiredJwtException expiredJwtException) {
-            throw new JwtInvalidException(ErrorMsg.TOKEN_EXPIRED, expiredJwtException);
-        } catch (MalformedJwtException malformedJwtException) {
-            throw new JwtInvalidException(ErrorMsg.TOKEN_MALFORMED, malformedJwtException);
-        } catch (IllegalArgumentException illegalArgumentException) {
-            throw new JwtInvalidException(ErrorMsg.ILLEGAL_TOKEN, illegalArgumentException);
-        }
-        return claims;
+        return JwtUtils.parseClaimsFromJwt(refreshKey, jwt);
     }
 }

@@ -1,13 +1,8 @@
 package com.project.deliveryservice.jwt;
 
 import com.project.deliveryservice.common.constants.AuthConstants;
-import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -33,22 +28,8 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        Claims claims;
-        try {
-            claims = Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
-                    .build()
-                    .parseClaimsJws(((JwtAuthenticationToken) authentication).getJsonWebToken())
-                    .getBody();
-        } catch (SignatureException signatureException) {
-            throw new JwtInvalidException(ErrorMsg.DIFFERENT_SIGNATURE_KEY, signatureException);
-        } catch (ExpiredJwtException expiredJwtException) {
-            throw new JwtInvalidException(ErrorMsg.TOKEN_EXPIRED, expiredJwtException);
-        } catch (MalformedJwtException malformedJwtException) {
-            throw new JwtInvalidException(ErrorMsg.TOKEN_MALFORMED, malformedJwtException);
-        } catch (IllegalArgumentException illegalArgumentException) {
-            throw new JwtInvalidException(ErrorMsg.ILLEGAL_TOKEN, illegalArgumentException);
-        }
+        String jwt = ((JwtAuthenticationToken) authentication).getJsonWebToken();
+        Claims claims = JwtUtils.parseClaimsFromJwt(secretKey, jwt);
         return new JwtAuthenticationToken(claims.getSubject(), "", createGrantedAuthorities(claims));
     }
 
