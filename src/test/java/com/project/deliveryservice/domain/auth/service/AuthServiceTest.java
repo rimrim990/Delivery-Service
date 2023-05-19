@@ -3,7 +3,7 @@ package com.project.deliveryservice.domain.auth.service;
 import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
-import com.project.deliveryservice.domain.user.entity.Grade;
+import com.project.deliveryservice.domain.user.entity.Role;
 import com.project.deliveryservice.domain.user.entity.Level;
 import com.project.deliveryservice.domain.user.entity.User;
 import com.project.deliveryservice.domain.user.repository.UserRepository;
@@ -38,6 +38,10 @@ class AuthServiceTest {
 
     AuthService authService;
 
+    private final String test_email = "test";
+    private final String test_password = "1234";
+    private final String test_authority = "ROLE_ADMIN";
+
     @BeforeEach
     public void setup() {
         mockUserRepository = Mockito.mock(UserRepository.class);
@@ -48,7 +52,7 @@ class AuthServiceTest {
 
     User getUser(String email, String password, String authority) {
         Level level = Level.builder()
-                .grade(Grade.valueOf(authority))
+                .role(Role.valueOf(authority))
                 .build();
 
         return User.builder()
@@ -62,7 +66,7 @@ class AuthServiceTest {
     @DisplayName("로그인 시 사용자 이름이 존재하지 않으면 UsernameNotFoundException 던진다.")
     public void test_01() {
 
-        LoginRequest loginRequest = new LoginRequest("test", "1234");
+        LoginRequest loginRequest = new LoginRequest(test_email, test_password);
 
         Throwable throwable = assertThrows(UsernameNotFoundException.class, () -> authService.login(loginRequest));
 
@@ -71,13 +75,13 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("로그인 요청 시 비밀번호가 존재하지 읂여먼 BadCredentialsException 던진다.")
+    @DisplayName("로그인 요청 시 비밀번호가 존재하지 않으면 BadCredentialsException 던진다.")
     public void test_02() {
 
-        LoginRequest loginRequest = new LoginRequest("test", "1234");
-        when(mockUserRepository.findByEmail("test")).thenReturn(
+        LoginRequest loginRequest = new LoginRequest(test_email, test_password);
+        when(mockUserRepository.findByEmail(test_email)).thenReturn(
                 Optional.of(
-                        getUser("test", "12345", "ADMIN")
+                        getUser(test_email, "12345", test_authority)
                 )
         );
 
@@ -91,11 +95,11 @@ class AuthServiceTest {
     @DisplayName("유효한 로그인 요청이 들어오면 JwtTokenDto 를 반환한다.")
     public void test_03() {
 
-        LoginRequest loginRequest = new LoginRequest("test", "1234");
-        User user = getUser("test", "1234", "ADMIN");
-        when(mockUserRepository.findByEmail("test")).thenReturn(Optional.of(user));
-        when(mockJwtProvider.createAccessToken("test", "ADMIN")).thenReturn("accessToken");
-        when(mockJwtProvider.createRefreshToken("test", "ADMIN")).thenReturn("refreshToken");
+        LoginRequest loginRequest = new LoginRequest(test_email, test_password);
+        User user = getUser(test_email, test_password, test_authority);
+        when(mockUserRepository.findByEmail(test_email)).thenReturn(Optional.of(user));
+        when(mockJwtProvider.createAccessToken(test_email, test_authority)).thenReturn("accessToken");
+        when(mockJwtProvider.createRefreshToken(test_email, test_authority)).thenReturn("refreshToken");
 
         JwtTokenDto jwtTokenDto = authService.login(loginRequest);
 
@@ -126,14 +130,14 @@ class AuthServiceTest {
     @DisplayName("토큰 재발급시 유효한 refreshToken 이 주어지면 JwtTokenDto 를 반환한다.")
     public void test_06() {
 
-        User user = getUser("test", "1234", "ADMIN");
-        Claims claims = Jwts.claims().setSubject("test");
-        claims.put(AuthConstants.KEY_ROLES, Collections.singleton("ADMIN"));
+        User user = getUser(test_email, test_password, test_authority);
+        Claims claims = Jwts.claims().setSubject(test_email);
+        claims.put(AuthConstants.KEY_ROLES, Collections.singleton(test_authority));
 
-        when(mockUserRepository.findByEmail("test")).thenReturn(Optional.of(user));
+        when(mockUserRepository.findByEmail(test_email)).thenReturn(Optional.of(user));
         when(mockJwtProvider.parseClaimsFromRefreshToken("refreshToken")).thenReturn(claims);
-        when(mockJwtProvider.createAccessToken("test", "ADMIN")).thenReturn("accessToken");
-        when(mockJwtProvider.createRefreshToken("test", "ADMIN")).thenReturn("refreshToken");
+        when(mockJwtProvider.createAccessToken(test_email, test_authority)).thenReturn("accessToken");
+        when(mockJwtProvider.createRefreshToken(test_email, test_authority)).thenReturn("refreshToken");
 
         JwtTokenDto jwtTokenDto = authService.reissue("Bearer refreshToken");
 
