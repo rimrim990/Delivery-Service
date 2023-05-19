@@ -1,11 +1,8 @@
 package com.project.deliveryservice.jwt;
 
-import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.common.exception.ErrorMsg;
-import io.jsonwebtoken.Claims;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import com.project.deliveryservice.utils.JwtUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,10 +13,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
+import java.security.Key;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -29,27 +24,17 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 class JwtAuthenticationProviderTest {
 
-    final int ONE_SECONDS = 1000;
-    final int ONE_MINUTE = 60 * ONE_SECONDS;
+    private final int expireMin = 10;
     @Value("${jwt.secret}")
-    String SECRET;
+    private String secret;
+    private Key secretKey;
 
     JwtAuthenticationProvider provider;
 
     @BeforeEach
     public void setup() {
-        provider = new JwtAuthenticationProvider(SECRET);
-    }
-
-    private String createToken(String username, List<String> roles, Date now, int expireMin, String secretKey) {
-        Claims claims = Jwts.claims().setSubject(username);
-        claims.put(AuthConstants.KEY_ROLES, roles);
-        return Jwts.builder()
-                .setClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + ONE_MINUTE * expireMin))
-                .signWith(SignatureAlgorithm.HS256, secretKey.getBytes())
-                .compact();
+        provider = new JwtAuthenticationProvider(secret);
+        secretKey = JwtUtils.generateKey(secret);
     }
 
     @Test
@@ -72,28 +57,28 @@ class JwtAuthenticationProviderTest {
     @DisplayName("다른 비밀키로 만든 토큰을 인자로 authentication 을 호출하면 JwtInvalidException 을 던진다.")
     public void test_03() {
 
-        String invalidSecretKey = "invalidSecretKeyInvalidInvalidInvalid";
-        String invalidToken = createToken("test", Collections.singletonList("ADMIN"), new Date(), 30, invalidSecretKey);
+        String invalidSecret = "invalidSecretKeyInvalidInvalidInvalidinvalidSecretKeyInvalidInvalidInvalidinvalidSecret";
+        Key invalidSecretKey = JwtUtils.generateKey(invalidSecret);
+        String invalidToken = JwtUtils.createJwtToken("test", "ROLE_ADMIN", expireMin, invalidSecretKey);
         JwtAuthenticationToken authentication = new JwtAuthenticationToken(invalidToken);
 
         Throwable throwable = assertThrows(JwtInvalidException.class, () -> provider.authenticate(authentication));
 
         assertThat(throwable, isA(JwtInvalidException.class));
-        assertThat(throwable.getMessage(), equalTo("signature key is different"));
+        assertThat(throwable.getMessage(), equalTo(ErrorMsg.DIFFERENT_SIGNATURE_KEY));
     }
 
     @Test
     @DisplayName("만료된 토큰을 인자로 authentication 을 호출하면 JwtInvalidException 을 던진다.")
     public void test_04() {
 
-        Date past = new Date(System.currentTimeMillis() - ONE_MINUTE * 10);
-        String invalidToken = createToken("test", Collections.singletonList("ADMIN"), past, 5, SECRET);
+        String invalidToken = JwtUtils.createJwtToken("test","ROLE_ADMIN", -expireMin, secretKey);
         JwtAuthenticationToken authentication = new JwtAuthenticationToken(invalidToken);
 
         Throwable throwable = assertThrows(JwtInvalidException.class, () -> provider.authenticate(authentication));
 
         assertThat(throwable, isA(JwtInvalidException.class));
-        assertThat(throwable.getMessage(), equalTo("expired token"));
+        assertThat(throwable.getMessage(), equalTo(ErrorMsg.TOKEN_EXPIRED));
     }
 
     @Test
@@ -124,7 +109,7 @@ class JwtAuthenticationProviderTest {
     @DisplayName("유효한 토큰을 인자로 authentication 을 호출하면 authentication 을 반환한다.")
     public void test_07() {
 
-        String validToken = createToken("test", Collections.singletonList("ADMIN"), new Date(), 30, SECRET);
+        String validToken = JwtUtils.createJwtToken("test", "ROLE_ADMIN", expireMin, secretKey);
         JwtAuthenticationToken authentication = new JwtAuthenticationToken(validToken);
 
         Authentication authenticated = provider.authenticate(authentication);
@@ -133,7 +118,7 @@ class JwtAuthenticationProviderTest {
         assertThat(authenticated.getCredentials(), equalTo(""));
         Collection<? extends GrantedAuthority> authorities = authenticated.getAuthorities();
         for (GrantedAuthority authority : authorities) {
-            assertThat(authority.getAuthority(), equalTo("ADMIN"));
+            assertThat(authority.getAuthority(), equalTo("ROLE_ADMIN"));
         }
     }
 }

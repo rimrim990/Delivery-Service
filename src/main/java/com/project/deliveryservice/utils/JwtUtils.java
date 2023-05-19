@@ -3,10 +3,7 @@ package com.project.deliveryservice.utils;
 import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.jwt.JwtInvalidException;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
@@ -15,8 +12,13 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.util.StringUtils;
 
 import java.security.Key;
+import java.util.Collections;
+import java.util.Date;
 
 public class JwtUtils {
+
+    private static final long ONE_SECONDS = 1000;
+    private static final long ONE_MINUTE = 60 * ONE_SECONDS;
 
     /**
      *
@@ -79,5 +81,25 @@ public class JwtUtils {
             throw new JwtInvalidException(ErrorMsg.ILLEGAL_TOKEN, illegalArgumentException);
         }
         return claims;
+    }
+
+    /**
+     *
+     * @param email jwt 토큰 claim 에 포함될 사용자 이메일
+     * @param authority jwt 토큰 claim 에 포함될 사용자 권한
+     * @param expireMin jwt 토큰 만료 시간 (분 단위)
+     * @param key jwt 토큰 암호화에 사용될 Key 인스턴스
+     * @return jwt 토큰
+     */
+    public static String createJwtToken(String email, String authority, int expireMin, Key key) {
+        Date now = new Date();
+        Claims claims = Jwts.claims().setSubject(email);
+        claims.put(AuthConstants.KEY_ROLES, Collections.singleton(authority));
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + ONE_MINUTE * expireMin))
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact();
     }
 }
