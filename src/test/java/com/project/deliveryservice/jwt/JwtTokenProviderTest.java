@@ -25,20 +25,23 @@ class JwtTokenProviderTest {
     @Value("${jwt.secret}")
     String secret;
 
+    private final String test_email = "test";
+    private final String test_authority = "ROLE_ADMIN";
+
     @Test
     @DisplayName("accessToken 값을 기반으로 생성된 claim 은 토큰과 동일한 값을 갖는다.")
     public void test_01() {
 
-        String jwt = jwtTokenProvider.createAccessToken("test", "Admin");
+        String jwt = jwtTokenProvider.createAccessToken(test_email, test_authority);
         Key secretKey = JwtUtils.generateKey(secret);
 
         Claims claims = JwtUtils.parseClaimsFromJwt(secretKey, jwt);
 
-        assertThat(claims.getSubject(), equalTo("test"));
+        assertThat(claims.getSubject(), equalTo(test_email));
         assertThat(claims.get(AuthConstants.KEY_ROLES), isA(List.class));
         List<String> roles = (List) claims.get(AuthConstants.KEY_ROLES);
         for (String role : roles) {
-            assertThat(role, equalTo("Admin"));
+            assertThat(role, equalTo(test_authority));
         }
     }
 
@@ -46,15 +49,15 @@ class JwtTokenProviderTest {
     @DisplayName("refreshToken 값을 기반으로 생성된 claim 은 토큰과 동일한 값을 갖는다.")
     public void test_02() {
 
-        String jwt = jwtTokenProvider.createRefreshToken("test", "Admin");
+        String jwt = jwtTokenProvider.createRefreshToken(test_email, test_authority);
 
         Claims claims = jwtTokenProvider.parseClaimsFromRefreshToken(jwt);
 
-        assertThat(claims.getSubject(), equalTo("test"));
+        assertThat(claims.getSubject(), equalTo(test_email));
         assertThat(claims.get(AuthConstants.KEY_ROLES), isA(List.class));
         List<String> roles = (List) claims.get(AuthConstants.KEY_ROLES);
         for (String role : roles) {
-            assertThat(role, equalTo("Admin"));
+            assertThat(role, equalTo(test_authority));
         }
     }
 
@@ -66,14 +69,14 @@ class JwtTokenProviderTest {
 
         Throwable throwable = assertThrows(JwtInvalidException.class, () -> jwtTokenProvider.parseClaimsFromRefreshToken(invalidRefreshToken));
 
-        assertThat(throwable.getMessage(), equalTo("malformed token"));
+        assertThat(throwable.getMessage(), equalTo(ErrorMsg.TOKEN_MALFORMED));
     }
 
     @Test
     @DisplayName("refreshToken 에서 claim 추출 시 accessToken 이 들어오면 JwtInvalidException 을 던진다.")
     public void test_04() {
 
-        String accessToken = jwtTokenProvider.createAccessToken("test", "ADMIN");
+        String accessToken = jwtTokenProvider.createAccessToken(test_email, test_authority);
 
         Throwable throwable = assertThrows(JwtInvalidException.class, () -> jwtTokenProvider.parseClaimsFromRefreshToken(accessToken));
 

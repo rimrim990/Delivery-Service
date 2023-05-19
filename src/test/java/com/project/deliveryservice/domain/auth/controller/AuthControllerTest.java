@@ -59,6 +59,10 @@ class AuthControllerTest {
     @MockBean
     UserRepository mockUserRepository;
 
+    private final String test_email = "test";
+    private final String test_password = "1234";
+    private final String test_authority = "ROLE_ADMIN";
+
     private Key secretKey;
     private Key refreshSecretKey;
 
@@ -86,19 +90,19 @@ class AuthControllerTest {
     }
 
     private String getAccessToken() {
-        return JwtUtils.createJwtToken("test", "ROLE_ADMIN", 10, secretKey);
+        return JwtUtils.createJwtToken(test_email, test_authority, 10, secretKey);
     }
 
     private String getRefreshToken() {
-        return JwtUtils.createJwtToken("test", "ROLE_ADMIN", 30, refreshSecretKey);
+        return JwtUtils.createJwtToken(test_email, test_authority, 30, refreshSecretKey);
     }
 
     @Test
     @DisplayName("존재하지 않는 사용자 정보로 로그인을 요청하면 Forbidden 상태를 반환한다.")
     public void test_01() throws Exception {
 
-        String requestContent = getLoginRequest("test", "1234");
-        when(mockUserRepository.findByEmail("test")).thenReturn(Optional.empty());
+        String requestContent = getLoginRequest(test_email, test_password);
+        when(mockUserRepository.findByEmail(test_email)).thenReturn(Optional.empty());
 
         mockMvc.perform(
                 post("/api/auth/login")
@@ -113,9 +117,9 @@ class AuthControllerTest {
     @DisplayName("일치하지 않는 비밀번호로 로그인 요청을 보내면 Forbidden 상태를 반환한다.")
     public void test_02() throws Exception {
 
-        User user = getUser("test", "1234", "ROLE_ADMIN");
-        String requestContent = getLoginRequest("test", "12345");
-        when(mockUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
+        User user = getUser(test_email, test_password, test_authority);
+        String requestContent = getLoginRequest(test_email, "12345");
+        when(mockUserRepository.findByEmail(test_email)).thenReturn(Optional.ofNullable(user));
 
         mockMvc.perform(
                 post("/api/auth/login")
@@ -130,15 +134,15 @@ class AuthControllerTest {
     @DisplayName("유효한 로그인 요청이 들어오면 JwtTokenDto 를 반환한다.")
     public void test_03() throws Exception {
 
-        User user = getUser("test", "1234", "ROLE_ADMIN");
-        String requestContent = getLoginRequest("test", "1234");
-        when(mockUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
+        User user = getUser(test_email, test_password, test_authority);
+        String requestContent = getLoginRequest(test_email, test_password);
+        when(mockUserRepository.findByEmail(test_email)).thenReturn(Optional.ofNullable(user));
 
         String accessToken = getAccessToken();
         String refreshToken = getRefreshToken();
-        when(mockJwtTokenProvider.createAccessToken("test", "ROLE_ADMIN")).thenReturn(accessToken);
-        when(mockJwtTokenProvider.createRefreshToken("test", "ROLE_ADMIN")).thenReturn(refreshToken);
-        when(mockJwtTokenProvider.parseClaimsFromRefreshToken(refreshToken)).thenReturn(Jwts.claims().setSubject("test"));
+        when(mockJwtTokenProvider.createAccessToken(test_email, test_authority)).thenReturn(accessToken);
+        when(mockJwtTokenProvider.createRefreshToken(test_email, test_authority)).thenReturn(refreshToken);
+        when(mockJwtTokenProvider.parseClaimsFromRefreshToken(refreshToken)).thenReturn(Jwts.claims().setSubject(test_email));
 
         MvcResult mvcResult = mockMvc.perform(
                 post("/api/auth/login")
@@ -184,15 +188,15 @@ class AuthControllerTest {
     @DisplayName("유효한 refreshToken 을 가지고 토큰 재발급을 요청하면 jwtTokenDto 를 반환한다.")
     public void test_06() throws Exception {
 
-        User user = getUser("test", "1234", "ROLE_ADMIN");
-        when(mockUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
+        User user = getUser(test_email, test_password, test_authority);
+        when(mockUserRepository.findByEmail(test_email)).thenReturn(Optional.ofNullable(user));
 
         String accessToken = getAccessToken();
         String refreshToken = getRefreshToken();
-        when(mockJwtTokenProvider.createAccessToken("test", "ROLE_ADMIN")).thenReturn(accessToken);
-        when(mockJwtTokenProvider.createRefreshToken("test", "ROLE_ADMIN")).thenReturn(refreshToken);
+        when(mockJwtTokenProvider.createAccessToken(test_email, test_authority)).thenReturn(accessToken);
+        when(mockJwtTokenProvider.createRefreshToken(test_email, test_authority)).thenReturn(refreshToken);
         when(mockJwtTokenProvider.parseClaimsFromRefreshToken(refreshToken))
-                .thenReturn(Jwts.claims().setSubject("test"));
+                .thenReturn(Jwts.claims().setSubject(test_email));
 
         MvcResult mvcResult = mockMvc.perform(
                 post("/api/auth/reissue")
@@ -214,8 +218,8 @@ class AuthControllerTest {
     public void test_07() throws Exception {
 
         String accessToken = getAccessToken();
-        User user = getUser("test", "1234", "ROLE_ADMIN");
-        when(mockUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
+        User user = getUser(test_email, test_password, test_authority);
+        when(mockUserRepository.findByEmail(test_email)).thenReturn(Optional.ofNullable(user));
         when(mockJwtTokenProvider.parseClaimsFromRefreshToken(accessToken))
                 .thenThrow(new JwtInvalidException(ErrorMsg.DIFFERENT_SIGNATURE_KEY));
 
