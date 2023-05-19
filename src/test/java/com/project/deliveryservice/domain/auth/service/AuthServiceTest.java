@@ -3,7 +3,7 @@ package com.project.deliveryservice.domain.auth.service;
 import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
-import com.project.deliveryservice.domain.user.entity.Grade;
+import com.project.deliveryservice.domain.user.entity.Role;
 import com.project.deliveryservice.domain.user.entity.Level;
 import com.project.deliveryservice.domain.user.entity.User;
 import com.project.deliveryservice.domain.user.repository.UserRepository;
@@ -48,7 +48,7 @@ class AuthServiceTest {
 
     User getUser(String email, String password, String authority) {
         Level level = Level.builder()
-                .grade(Grade.valueOf(authority))
+                .role(Role.valueOf(authority))
                 .build();
 
         return User.builder()
@@ -77,7 +77,7 @@ class AuthServiceTest {
         LoginRequest loginRequest = new LoginRequest("test", "1234");
         when(mockUserRepository.findByEmail("test")).thenReturn(
                 Optional.of(
-                        getUser("test", "12345", "ADMIN")
+                        getUser("test", "12345", "ROLE_ADMIN")
                 )
         );
 
@@ -92,10 +92,10 @@ class AuthServiceTest {
     public void test_03() {
 
         LoginRequest loginRequest = new LoginRequest("test", "1234");
-        User user = getUser("test", "1234", "ADMIN");
+        User user = getUser("test", "1234", "ROLE_ADMIN");
         when(mockUserRepository.findByEmail("test")).thenReturn(Optional.of(user));
-        when(mockJwtProvider.createAccessToken("test", "ADMIN")).thenReturn("accessToken");
-        when(mockJwtProvider.createRefreshToken("test", "ADMIN")).thenReturn("refreshToken");
+        when(mockJwtProvider.createAccessToken("test", "ROLE_ADMIN")).thenReturn("accessToken");
+        when(mockJwtProvider.createRefreshToken("test", "ROLE_ADMIN")).thenReturn("refreshToken");
 
         JwtTokenDto jwtTokenDto = authService.login(loginRequest);
 
@@ -126,14 +126,14 @@ class AuthServiceTest {
     @DisplayName("토큰 재발급시 유효한 refreshToken 이 주어지면 JwtTokenDto 를 반환한다.")
     public void test_06() {
 
-        User user = getUser("test", "1234", "ADMIN");
+        User user = getUser("test", "1234", "ROLE_ADMIN");
         Claims claims = Jwts.claims().setSubject("test");
-        claims.put(AuthConstants.KEY_ROLES, Collections.singleton("ADMIN"));
+        claims.put(AuthConstants.KEY_ROLES, Collections.singleton("ROLE_ADMIN"));
 
         when(mockUserRepository.findByEmail("test")).thenReturn(Optional.of(user));
         when(mockJwtProvider.parseClaimsFromRefreshToken("refreshToken")).thenReturn(claims);
-        when(mockJwtProvider.createAccessToken("test", "ADMIN")).thenReturn("accessToken");
-        when(mockJwtProvider.createRefreshToken("test", "ADMIN")).thenReturn("refreshToken");
+        when(mockJwtProvider.createAccessToken("test", "ROLE_ADMIN")).thenReturn("accessToken");
+        when(mockJwtProvider.createRefreshToken("test", "ROLE_ADMIN")).thenReturn("refreshToken");
 
         JwtTokenDto jwtTokenDto = authService.reissue("Bearer refreshToken");
 

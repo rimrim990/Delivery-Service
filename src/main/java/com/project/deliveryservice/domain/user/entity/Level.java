@@ -21,10 +21,10 @@ public class Level implements GrantedAuthority {
     private int policy;
 
     @Enumerated(value = EnumType.STRING)
-    private Grade grade;
+    private Role role;
 
     @Override
     public String getAuthority() {
-        return grade.toString();
+        return role.toString();
     }
 }

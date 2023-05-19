@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
-import com.project.deliveryservice.domain.user.entity.Grade;
+import com.project.deliveryservice.domain.user.entity.Role;
 import com.project.deliveryservice.domain.user.entity.Level;
 import com.project.deliveryservice.domain.user.entity.User;
 import com.project.deliveryservice.domain.user.repository.UserRepository;
@@ -66,7 +66,7 @@ class AuthControllerTest {
 
     User getUser(String email, String password, String authority) {
         Level level = Level.builder()
-                .grade(Grade.valueOf(authority))
+                .role(Role.valueOf(authority))
                 .build();
 
         return User.builder()
@@ -94,12 +94,12 @@ class AuthControllerTest {
 
     private String getAccessToken() {
         Key key = Keys.hmacShaKeyFor(secretKey.getBytes());
-        return createToken("test", Collections.singletonList("ADMIN"), new Date(), 30, key);
+        return createToken("test", Collections.singletonList("ROLE_ADMIN"), new Date(), 30, key);
     }
 
     private String getRefreshToken() {
         Key key = Keys.hmacShaKeyFor(secretKey.getBytes());
-        return createToken("test", Collections.singletonList("ADMIN"), new Date(), 10080, key);
+        return createToken("test", Collections.singletonList("ROLE_ADMIN"), new Date(), 10080, key);
     }
 
     @Test
@@ -139,14 +139,14 @@ class AuthControllerTest {
     @DisplayName("유효한 로그인 요청이 들어오면 JwtTokenDto 를 반환한다.")
     public void test_03() throws Exception {
 
-        User user = getUser("test", "1234", "ADMIN");
+        User user = getUser("test", "1234", "ROLE_ADMIN");
         String requestContent = getLoginRequest("test", "1234");
         when(mockUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
 
         String accessToken = getAccessToken();
         String refreshToken = getRefreshToken();
-        when(mockJwtTokenProvider.createAccessToken("test", "ADMIN")).thenReturn(accessToken);
-        when(mockJwtTokenProvider.createRefreshToken("test", "ADMIN")).thenReturn(refreshToken);
+        when(mockJwtTokenProvider.createAccessToken("test", "ROLE_ADMIN")).thenReturn(accessToken);
+        when(mockJwtTokenProvider.createRefreshToken("test", "ROLE_ADMIN")).thenReturn(refreshToken);
         when(mockJwtTokenProvider.parseClaimsFromRefreshToken(refreshToken)).thenReturn(Jwts.claims().setSubject("test"));
 
         MvcResult mvcResult = mockMvc.perform(
@@ -193,13 +193,13 @@ class AuthControllerTest {
     @DisplayName("유효한 refreshToken 을 가지고 토큰 재발급을 요청하면 jwtTokenDto 를 반환한다.")
     public void test_06() throws Exception {
 
-        User user = getUser("test", "1234", "ADMIN");
+        User user = getUser("test", "1234", "ROLE_ADMIN");
         when(mockUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
 
         String accessToken = getAccessToken();
         String refreshToken = getRefreshToken();
-        when(mockJwtTokenProvider.createAccessToken("test", "ADMIN")).thenReturn(accessToken);
-        when(mockJwtTokenProvider.createRefreshToken("test", "ADMIN")).thenReturn(refreshToken);
+        when(mockJwtTokenProvider.createAccessToken("test", "ROLE_ADMIN")).thenReturn(accessToken);
+        when(mockJwtTokenProvider.createRefreshToken("test", "ROLE_ADMIN")).thenReturn(refreshToken);
         when(mockJwtTokenProvider.parseClaimsFromRefreshToken(refreshToken))
                 .thenReturn(Jwts.claims().setSubject("test"));
 
