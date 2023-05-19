@@ -14,10 +14,9 @@ import com.project.deliveryservice.jwt.JwtInvalidException;
 import com.project.deliveryservice.jwt.JwtTokenDto;
 import com.project.deliveryservice.jwt.JwtTokenProvider;
 import com.project.deliveryservice.utils.ApiUtils.ApiResponse;
-import io.jsonwebtoken.Claims;
+import com.project.deliveryservice.utils.JwtUtils;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,9 +29,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.security.Key;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -54,15 +50,23 @@ class AuthControllerTest {
     @Autowired
     ObjectMapper objectMapper;
     @Value("${jwt.secret}")
-    String secretKey;
+    String secret;
+    @Value("${jwt.refresh-secret}")
+    String refreshSecret;
 
     @MockBean
     JwtTokenProvider mockJwtTokenProvider;
     @MockBean
     UserRepository mockUserRepository;
 
-    private static final int ONE_SECONDS = 1000;
-    private static final int ONE_MINUTE = 60 * ONE_SECONDS;
+    private Key secretKey;
+    private Key refreshSecretKey;
+
+    @BeforeEach
+    public void setup() {
+        secretKey = JwtUtils.generateKey(secret);
+        refreshSecretKey = JwtUtils.generateKey(refreshSecret);
+    }
 
     User getUser(String email, String password, String authority) {
         Level level = Level.builder()
@@ -76,30 +80,17 @@ class AuthControllerTest {
                 .build();
     }
 
-    private String createToken(String email, List<String> roles, Date now, int expireMin, Key key) {
-        Claims claims = Jwts.claims().setSubject(email);
-        claims.put(AuthConstants.KEY_ROLES, roles);
-        return Jwts.builder()
-                .setClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + ONE_MINUTE * expireMin))
-                .signWith(key, SignatureAlgorithm.HS512)
-                .compact();
-    }
-
     String getLoginRequest(String email, String password) throws JsonProcessingException {
         LoginRequest loginRequest = new LoginRequest(email, password);
         return objectMapper.writeValueAsString(loginRequest);
     }
 
     private String getAccessToken() {
-        Key key = Keys.hmacShaKeyFor(secretKey.getBytes());
-        return createToken("test", Collections.singletonList("ROLE_ADMIN"), new Date(), 30, key);
+        return JwtUtils.createJwtToken("test", "ROLE_ADMIN", 10, secretKey);
     }
 
     private String getRefreshToken() {
-        Key key = Keys.hmacShaKeyFor(secretKey.getBytes());
-        return createToken("test", Collections.singletonList("ROLE_ADMIN"), new Date(), 10080, key);
+        return JwtUtils.createJwtToken("test", "ROLE_ADMIN", 30, refreshSecretKey);
     }
 
     @Test
@@ -122,7 +113,7 @@ class AuthControllerTest {
     @DisplayName("일치하지 않는 비밀번호로 로그인 요청을 보내면 Forbidden 상태를 반환한다.")
     public void test_02() throws Exception {
 
-        User user = getUser("test", "1234", "ADMIN");
+        User user = getUser("test", "1234", "ROLE_ADMIN");
         String requestContent = getLoginRequest("test", "12345");
         when(mockUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
 
@@ -223,7 +214,7 @@ class AuthControllerTest {
     public void test_07() throws Exception {
 
         String accessToken = getAccessToken();
-        User user = getUser("test", "1234", "ADMIN");
+        User user = getUser("test", "1234", "ROLE_ADMIN");
         when(mockUserRepository.findByEmail("test")).thenReturn(Optional.ofNullable(user));
         when(mockJwtTokenProvider.parseClaimsFromRefreshToken(accessToken))
                 .thenThrow(new JwtInvalidException(ErrorMsg.DIFFERENT_SIGNATURE_KEY));
