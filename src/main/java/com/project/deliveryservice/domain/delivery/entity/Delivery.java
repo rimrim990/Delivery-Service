@@ -5,6 +5,8 @@ import com.project.deliveryservice.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Builder
 @AllArgsConstructor
@@ -19,4 +21,16 @@ public class Delivery extends BaseTimeEntity {
     @Embedded
     @Column(nullable = false)
     private Address address;
+
+    // 배달 기사 배정 시각
+    private LocalDateTime allocatedAt;
+
+    // 배달 수령 시각
+    private LocalDateTime pickupedAt;
+
+    // 배달 완료 시각
+    private LocalDateTime completedAt;
+
+    // 배차 취소 시각
+    private LocalDateTime canceledAt;
 }
