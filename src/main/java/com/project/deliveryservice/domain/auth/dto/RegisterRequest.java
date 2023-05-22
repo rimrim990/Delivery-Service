@@ -31,6 +31,6 @@ public class RegisterRequest {
     private String street;
 
     @NotEmpty
-    @Digits(integer = 5, fraction = 0)
+    @Digits(integer = 5, fraction = 0, message = "must only contain numeric value")
     private String zipCode;
 }
