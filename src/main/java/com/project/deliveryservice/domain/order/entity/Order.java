@@ -6,6 +6,7 @@ import com.project.deliveryservice.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -30,6 +31,15 @@ public class Order extends ExtendedTimeEntity {
     @JoinColumn(name = "delivery_id")
     private Delivery delivery;
 
-    @Enumerated(EnumType.STRING)
-    private OrderStatus orderStatus;
+    // 환불 요청 시각
+    private LocalDateTime refundRequestedAt;
+
+    // 환불 완료 시각
+    private LocalDateTime refundCompletedAt;
+
+    // 주문 처리 완료 시각
+    private LocalDateTime completedAt;
+
+    // 주문 취소 시각
+    private LocalDateTime canceledAt;
 }
