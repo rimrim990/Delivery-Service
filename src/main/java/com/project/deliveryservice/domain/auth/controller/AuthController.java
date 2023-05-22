@@ -3,7 +3,7 @@ package com.project.deliveryservice.domain.auth.controller;
 import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.auth.service.AuthService;
-import com.project.deliveryservice.domain.auth.service.RegisterRequest;
+import com.project.deliveryservice.domain.auth.dto.RegisterRequest;
 import com.project.deliveryservice.domain.user.dto.UserInfoDto;
 import com.project.deliveryservice.jwt.JwtTokenDto;
 

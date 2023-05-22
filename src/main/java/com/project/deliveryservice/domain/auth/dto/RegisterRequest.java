@@ -1,4 +1,4 @@
-package com.project.deliveryservice.domain.auth.service;
+package com.project.deliveryservice.domain.auth.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

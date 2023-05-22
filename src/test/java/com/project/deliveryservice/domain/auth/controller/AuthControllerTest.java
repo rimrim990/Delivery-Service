@@ -6,7 +6,7 @@ import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.common.entity.Address;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
-import com.project.deliveryservice.domain.auth.service.RegisterRequest;
+import com.project.deliveryservice.domain.auth.dto.RegisterRequest;
 import com.project.deliveryservice.domain.user.dto.UserInfoDto;
 import com.project.deliveryservice.domain.user.entity.Role;
 import com.project.deliveryservice.domain.user.entity.Level;
@@ -133,7 +133,7 @@ class AuthControllerTest {
                         .contentType("application/json"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("data").value(nullValue()))
-                .andExpect(jsonPath("errorMsg").value("test is not found"));
+                .andExpect(jsonPath("errorMsg").value(test_email + " is not found"));
     }
 
     @Test

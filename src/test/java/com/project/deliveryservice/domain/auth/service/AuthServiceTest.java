@@ -4,6 +4,7 @@ import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.common.entity.Address;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
+import com.project.deliveryservice.domain.auth.dto.RegisterRequest;
 import com.project.deliveryservice.domain.user.dto.UserInfoDto;
 import com.project.deliveryservice.domain.user.entity.Role;
 import com.project.deliveryservice.domain.user.entity.Level;
