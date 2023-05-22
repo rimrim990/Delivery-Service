@@ -2,6 +2,7 @@ package com.project.deliveryservice.domain.auth.service;
 
 import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.common.entity.Address;
+import com.project.deliveryservice.common.exception.DuplicatedArgumentException;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.auth.dto.RegisterRequest;
@@ -74,7 +75,9 @@ public class AuthService {
     public UserInfoDto register(RegisterRequest request) {
         // 동일한 이메일로 이미 회원가입 되어있음
         userRepository.findByEmail(request.getEmail())
-                .ifPresent(u -> { throw new RuntimeException(u.getEmail() + " already exist"); } );
+                .ifPresent(u -> {
+                    throw new DuplicatedArgumentException(u.getEmail() + ErrorMsg.DUPLICATED);
+                } );
 
         Level defaultLevel = levelRepository.findByRole(Role.ROLE_NORMAL)
                 .orElseThrow(() -> new RuntimeException("internal server error"));

@@ -49,4 +49,11 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(fail(msg));
     }
+
+    @ExceptionHandler(DuplicatedArgumentException.class)
+    public ResponseEntity<ApiResponse> handleDuplicatedArgumentException(DuplicatedArgumentException e) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(fail(e.getMessage()));
+    }
 }
