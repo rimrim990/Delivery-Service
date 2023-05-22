@@ -3,6 +3,7 @@ package com.project.deliveryservice.domain.auth.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.project.deliveryservice.common.constants.AuthConstants;
+import com.project.deliveryservice.common.entity.Address;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.user.dto.UserInfoDto;
@@ -34,8 +35,8 @@ import java.security.Key;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -83,6 +84,15 @@ class AuthControllerTest {
                 .email(email)
                 .password(passwordEncoder.encode(password))
                 .level(level)
+                .build();
+    }
+
+    User getDefaultUser(Long id, String email, Address address) {
+        return User.builder()
+                .id(id)
+                .email(email)
+                .address(address)
+                .level(Level.builder().name("고마운분").build())
                 .build();
     }
 
@@ -279,8 +289,11 @@ class AuthControllerTest {
 
         // given
         String request = getLoginRequest("test@gmail.com", test_password);
+        Address address = new Address("seoul", "songpa", "012345");
+        User user = getDefaultUser(1L, "test@gmail.com", address);
 
         // when
+        when(mockUserRepository.save(any())).thenReturn(user);
         MvcResult mvcResult = mockMvc.perform(
                 post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -290,7 +303,8 @@ class AuthControllerTest {
                 .andReturn();
 
         ApiResponse<UserInfoDto> res = deserializeApiResponse(mvcResult.getResponse().getContentAsString(), UserInfoDto.class);
-        assertThat(res.getErrorMsg(), equalTo(nullValue()));
+        assertThat(res.getErrorMsg(), is(nullValue()));
+        assertThat(res.getData().getAddress(), equalTo(address.toString()));
         assertThat(res.getData().getEmail(), equalTo("test@gmail.com"));
         assertThat(res.getData().getLevel(), equalTo("고마운분"));
     }
