@@ -19,28 +19,30 @@ public class Shop extends ExtendedTimeEntity {
     public Long id;
 
     @Enumerated(value = EnumType.STRING)
+    @Column(nullable = false)
     public Category category;
 
-    @Column()
+    @Column(nullable = false)
     // 최소 주문 금액
     public int minPrice;
 
     @Embedded
+    @Column(nullable = false)
     public Address address;
 
-    @Column()
+    @Column(nullable = false)
     // 가게 설명
     public String description;
 
-    @Column()
+    @Column(nullable = false)
     // 휴무일
     public int restDays;
 
-    @Column()
+    @Column(nullable = false)
     // 영업 시작 시간
     public LocalTime startTime;
 
-    @Column()
+    @Column(nullable = false)
     // 영업 종료 시간
     public LocalTime endTime;
 }
