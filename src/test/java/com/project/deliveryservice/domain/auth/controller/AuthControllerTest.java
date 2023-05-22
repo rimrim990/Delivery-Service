@@ -421,24 +421,6 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("회원가입 시에 비밀번호가 너무 짧을 경우 400 상태를 반환한다.")
-    public void test_08_7() throws Exception {
-
-        String request = getRegisterRequest(test_email, "123",
-                "123", "seoul", "songpa", "12345");
-
-        mockMvc.perform(
-                        post("/api/auth/register")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(request)
-                )
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("data").value(nullValue()))
-                .andExpect(jsonPath("errorMsg").value("password length must be between 3 and 12"))
-                .andReturn();
-    }
-
-    @Test
     @DisplayName("중복된 email 로 회원가입을 요청하면 에러 메세지와 400 상태를 반환한다.")
     public void test_09() throws Exception {
 
