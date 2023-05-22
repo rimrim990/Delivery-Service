@@ -6,13 +6,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.project.deliveryservice.utils.ApiUtils.fail;
 
@@ -42,10 +41,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse> handleValidationException(MethodArgumentNotValidException e) {
-        List<String> msg = new LinkedList<>();
-        for (FieldError err : e.getBindingResult().getFieldErrors()) {
-            msg.add(err.getField() + " " + err.getDefaultMessage());
-        }
+        List<String> msg = e.getBindingResult()
+                .getFieldErrors().stream()
+                .map(err -> err.getField() + " " + err.getDefaultMessage())
+                .collect(Collectors.toList());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(fail(msg));
