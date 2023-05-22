@@ -5,6 +5,7 @@ import com.project.deliveryservice.domain.shop.entity.Shop;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 @Getter
 @Builder
@@ -32,6 +33,7 @@ public class Item extends BaseTimeEntity {
     @Column(nullable = false)
     private int price;
 
+    @ColumnDefault(value = "false")
     @Column(nullable = false)
     // 사장님 추천 여가
     private boolean isRecommended;
