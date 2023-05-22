@@ -6,6 +6,7 @@ import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.user.dto.UserInfoDto;
 import com.project.deliveryservice.domain.user.entity.Level;
+import com.project.deliveryservice.domain.user.entity.Role;
 import com.project.deliveryservice.domain.user.entity.User;
 import com.project.deliveryservice.domain.user.repository.LevelRepository;
 import com.project.deliveryservice.domain.user.repository.UserRepository;
@@ -74,10 +75,8 @@ public class AuthService {
         userRepository.findByEmail(request.getEmail())
                 .ifPresent(u -> { throw new RuntimeException(u.getEmail() + " already exist"); } );
 
-        Level defaultLevel = levelRepository.findByName("고마운분")
+        Level defaultLevel = levelRepository.findByRole(Role.ROLE_NORMAL)
                 .orElseThrow(() -> new RuntimeException("internal server error"));
-
-        System.out.println(defaultLevel);
 
         Address address = new Address(request.getCity(), request.getStreet(), request.getZipCode());
         User user = User.builder()
