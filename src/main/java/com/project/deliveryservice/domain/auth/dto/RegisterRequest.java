@@ -1,12 +1,12 @@
 package com.project.deliveryservice.domain.auth.dto;
 
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import org.hibernate.validator.constraints.Length;
-import org.springframework.format.annotation.NumberFormat;
 
 @Getter
 @AllArgsConstructor
@@ -31,6 +31,6 @@ public class RegisterRequest {
     private String street;
 
     @NotEmpty
-    @NumberFormat
+    @Digits(integer = 5, fraction = 0)
     private String zipCode;
 }
