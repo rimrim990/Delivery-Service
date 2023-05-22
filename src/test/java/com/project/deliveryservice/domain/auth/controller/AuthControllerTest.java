@@ -328,11 +328,43 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("회원가입 시에 username 이 없거나 너무 짧으면 400 상태를 반환한다.")
+    @DisplayName("회원가입 시에 username 이 없으면 400 상태를 반환한다.")
     public void test_08_2() throws Exception {
 
         String request = getRegisterRequest(test_email, test_password,
+                null, "seoul", "songpa", "12345");
+
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isBadRequest())
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원가입 시에 username 이 너무 짧으면 400 상태를 반환한다.")
+    public void test_08_3() throws Exception {
+
+        String request = getRegisterRequest(test_email, test_password,
                 "12", "seoul", "songpa", "12345");
+
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isBadRequest())
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원가입 시에 username 이 너무 길면 400 상태를 반환한다.")
+    public void test_08_4() throws Exception {
+
+        String request = getRegisterRequest(test_email, test_password,
+                "123456789101112131415", "seoul", "songpa", "12345");
 
         mockMvc.perform(
                         post("/api/auth/register")
@@ -345,10 +377,26 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("회원가입 시에 주소 값이 완전하지 않을 경우 400 상태를 반환한다.")
-    public void test_08_3() throws Exception {
+    public void test_08_5() throws Exception {
 
         String request = getRegisterRequest(test_email, test_password,
-                "12", "seoul", null, "12345");
+                "123", "seoul", null, "12345");
+
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isBadRequest())
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원가입 시에 주소 값의 zipcode 가 숫자 포맷이 아닐 경우 400 상태를 반환한다.")
+    public void test_08_6() throws Exception {
+
+        String request = getRegisterRequest(test_email, test_password,
+                "123", "seoul",  "songpa", "12345a");
 
         mockMvc.perform(
                         post("/api/auth/register")
@@ -361,10 +409,10 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("회원가입 시에 비밀번호가 너무 짧을 경우 400 상태를 반환한다.")
-    public void test_08_4() throws Exception {
+    public void test_08_7() throws Exception {
 
         String request = getRegisterRequest(test_email, "123",
-                "12", "seoul", "songpa", "12345");
+                "123", "seoul", "songpa", "12345");
 
         mockMvc.perform(
                         post("/api/auth/register")
