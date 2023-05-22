@@ -27,7 +27,7 @@ public class User extends ExtendedTimeEntity {
     @Size(min = 3, max= 12)
     private String username;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "level_id")
     private Level level;
 
