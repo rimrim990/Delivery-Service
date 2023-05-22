@@ -416,7 +416,7 @@ class AuthControllerTest {
                 )
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("data").value(nullValue()))
-                .andExpect(jsonPath("errorMsg").value("zipCode must have numeric value"))
+                .andExpect(jsonPath("errorMsg").value("zipCode must only contain numeric value"))
                 .andReturn();
     }
 
