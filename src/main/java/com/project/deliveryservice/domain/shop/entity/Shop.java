@@ -28,7 +28,7 @@ public class Shop extends ExtendedTimeEntity {
     public Address address;
 
     @Column(columnDefinition = "가게 설명")
-    public String content;
+    public String description;
 
     @Column(columnDefinition = "휴무일")
     public int restDays;
