@@ -421,24 +421,24 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("중복된 email 로 회원가입을 요청하면 에러 메세지와 400 상태를 반환한다.")
+    @DisplayName("중복된 email 로 회원가입을 요청하면 에러 메세지와 403 상태를 반환한다.")
     public void test_09() throws Exception {
 
         // given
         String request = getRegisterRequest(test_email, test_password, "test",
                 "seoul", "songpa" , "12345");
-        User user = getDefaultUser(1L, "test@naver.com", new Address("seoul", "songpa", "12345"));
+        User user = getDefaultUser(1L, test_email, new Address("seoul", "songpa", "12345"));
 
         // when
-        when(mockUserRepository.findByEmail("test@naver.com")).thenReturn(Optional.ofNullable(user));
+        when(mockUserRepository.findByEmail(test_email)).thenReturn(Optional.ofNullable(user));
         mockMvc.perform(
                 post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request)
         )
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("data").value(nullValue()))
-                .andExpect(jsonPath("errorMsg").value(ErrorMsg.EMAIL_DUPLICATED))
+                .andExpect(jsonPath("errorMsg").value(test_email + ErrorMsg.DUPLICATED))
                 .andReturn();
     }
 
