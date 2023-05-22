@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
+import com.project.deliveryservice.domain.user.dto.UserInfoDto;
 import com.project.deliveryservice.domain.user.entity.Role;
 import com.project.deliveryservice.domain.user.entity.Level;
 import com.project.deliveryservice.domain.user.entity.User;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -230,5 +232,64 @@ class AuthControllerTest {
                 .andExpect(jsonPath("data").value(nullValue()))
                 .andExpect(jsonPath("errorMsg").value(ErrorMsg.DIFFERENT_SIGNATURE_KEY))
                 .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원가입 요청 시에 email 이 없으면 에러 메세지와 400 상태를 반환한다. - Validation Error")
+    public void test_08() throws Exception {
+
+        // given
+        String request = getLoginRequest(null, test_password);
+
+        // when
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("중복된 email 로 회원가입을 요청하면 에러 메세지와 400 상태를 반환한다.")
+    public void test_09() throws Exception {
+
+        // given
+        String request = getLoginRequest("test@naver.com", test_password);
+
+        // when
+        mockMvc.perform(
+                post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request)
+        )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value(ErrorMsg.EMAIL_DUPLICATED))
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원 가입에 성공하면 UserInfoDto 와 201 상태를 반환한다.")
+    public void test_10() throws Exception {
+
+        // given
+        String request = getLoginRequest("test@gmail.com", test_password);
+
+        // when
+        MvcResult mvcResult = mockMvc.perform(
+                post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request)
+        )
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JavaType javaType = objectMapper.getTypeFactory().constructParametricType(ApiResponse.class, UserInfoDto.class);
+        ApiResponse<UserInfoDto> res = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), javaType);
+        assertThat(res.getErrorMsg(), equalTo(nullValue()));
+        assertThat(res.getData().getEmail(), equalTo("test@gmail.com"));
+        assertThat(res.getData().getLevel(), equalTo("고마운분"));
     }
 }

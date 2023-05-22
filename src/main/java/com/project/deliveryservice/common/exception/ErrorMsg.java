@@ -15,4 +15,6 @@ public class ErrorMsg {
     public static final String CLAIM_NOT_EXIST = "claim not exist in token";
 
     public static final String PASSWORD_NOT_MATCH = "password does not match";
+
+    public static final String EMAIL_DUPLICATED = "duplicated email";
 }
