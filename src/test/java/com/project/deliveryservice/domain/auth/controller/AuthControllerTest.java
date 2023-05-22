@@ -308,6 +308,7 @@ class AuthControllerTest {
                                 .content(request))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("email must not be empty"))
                 .andReturn();
     }
 
@@ -324,6 +325,8 @@ class AuthControllerTest {
                         .content(request)
         )
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("email must be a well-formed email address"))
                 .andReturn();
     }
 
@@ -340,6 +343,8 @@ class AuthControllerTest {
                                 .content(request)
                 )
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("username must not be empty"))
                 .andReturn();
     }
 
@@ -356,6 +361,8 @@ class AuthControllerTest {
                                 .content(request)
                 )
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("username length must be between 3 and 12"))
                 .andReturn();
     }
 
@@ -372,6 +379,8 @@ class AuthControllerTest {
                                 .content(request)
                 )
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("username length must be between 3 and 12"))
                 .andReturn();
     }
 
@@ -388,6 +397,8 @@ class AuthControllerTest {
                                 .content(request)
                 )
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("street must not be empty"))
                 .andReturn();
     }
 
@@ -404,6 +415,8 @@ class AuthControllerTest {
                                 .content(request)
                 )
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("zipCode must have numeric value"))
                 .andReturn();
     }
 
@@ -420,6 +433,8 @@ class AuthControllerTest {
                                 .content(request)
                 )
                 .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("password length must be between 3 and 12"))
                 .andReturn();
     }
 
@@ -428,9 +443,9 @@ class AuthControllerTest {
     public void test_09() throws Exception {
 
         // given
-        String request = getLoginRequest("test@naver.com", test_password);
+        String request = getRegisterRequest(test_email, test_password, "test",
+                "seoul", "songpa" , "12345");
         User user = getDefaultUser(1L, "test@naver.com", new Address("seoul", "songpa", "12345"));
-
 
         // when
         when(mockUserRepository.findByEmail("test@naver.com")).thenReturn(Optional.ofNullable(user));
@@ -450,7 +465,8 @@ class AuthControllerTest {
     public void test_10() throws Exception {
 
         // given
-        String request = getLoginRequest("test@gmail.com", test_password);
+        String request = getRegisterRequest(test_email, test_password, "test",
+                "seoul", "songpa" , "12345");
         Address address = new Address("seoul", "songpa", "012345");
         User user = getDefaultUser(1L, "test@gmail.com", address);
 
