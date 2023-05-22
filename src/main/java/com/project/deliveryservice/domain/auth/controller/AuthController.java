@@ -8,6 +8,7 @@ import com.project.deliveryservice.domain.user.dto.UserInfoDto;
 import com.project.deliveryservice.jwt.JwtTokenDto;
 
 import com.project.deliveryservice.utils.ApiUtils.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -25,7 +26,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ApiResponse<JwtTokenDto> login(@RequestBody LoginRequest request) {
+    public ApiResponse<JwtTokenDto> login(@Valid @RequestBody LoginRequest request) {
         log.info("login requested with email " + request.getEmail());
         return success(authService.login(request));
     }
@@ -37,7 +38,7 @@ public class AuthController {
     }
 
     @PostMapping(value = "/register", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<ApiResponse<UserInfoDto>> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<UserInfoDto>> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(success(authService.register(request)));
     }
