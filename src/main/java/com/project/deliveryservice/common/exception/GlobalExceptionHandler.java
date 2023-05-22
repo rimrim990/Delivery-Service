@@ -6,9 +6,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.LinkedList;
+import java.util.List;
 
 import static com.project.deliveryservice.utils.ApiUtils.fail;
 
@@ -38,8 +42,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse> handleValidationException(MethodArgumentNotValidException e) {
+        List<String> msg = new LinkedList<>();
+        for (FieldError err : e.getBindingResult().getFieldErrors()) {
+            msg.add(err.getField() + " " + err.getDefaultMessage());
+        }
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(fail(e.getMessage()));
+                .body(fail(msg));
     }
 }
