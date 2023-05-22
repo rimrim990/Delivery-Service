@@ -6,6 +6,7 @@ import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.common.entity.Address;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
+import com.project.deliveryservice.domain.auth.service.RegisterRequest;
 import com.project.deliveryservice.domain.user.dto.UserInfoDto;
 import com.project.deliveryservice.domain.user.entity.Role;
 import com.project.deliveryservice.domain.user.entity.Level;
@@ -62,8 +63,8 @@ class AuthControllerTest {
     @MockBean
     UserRepository mockUserRepository;
 
-    private final String test_email = "test";
-    private final String test_password = "1234";
+    private final String test_email = "test@google.com";
+    private final String test_password = "1234567890";
     private final String test_authority = "ROLE_ADMIN";
 
     private Key secretKey;
@@ -106,6 +107,11 @@ class AuthControllerTest {
         return jsonUtils.serialize(loginRequest);
     }
 
+    String getRegisterRequest(String email, String password, String username, String city, String street, String zipCode) throws JsonProcessingException {
+        RegisterRequest registerRequest = new RegisterRequest(email, password, username, city, street, zipCode);
+        return jsonUtils.serialize(registerRequest);
+    }
+
     private String getAccessToken() {
         return JwtUtils.createJwtToken(test_email, test_authority, 10, secretKey);
     }
@@ -129,6 +135,46 @@ class AuthControllerTest {
                 .andExpect(jsonPath("data").value(nullValue()))
                 .andExpect(jsonPath("errorMsg").value("test is not found"));
     }
+
+    @Test
+    @DisplayName("email 이 없으면 400 상태를 반환한다")
+    public void test_01_1() throws Exception {
+
+        String requestContent = getLoginRequest(null, test_password);
+
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .content(requestContent)
+                                .contentType("application/json"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("로그인 요청 시에 email 이 올바른 형태가 아니면 400 상태를 반환한다")
+    public void test_01_2() throws Exception {
+
+        String requestContent = getLoginRequest("test", test_password);
+
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .content(requestContent)
+                                .contentType("application/json"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("로그인 요청 시에 비밀번호가 없으면 400 상태를 반환한다")
+    public void test_01_3() throws Exception {
+
+        String requestContent = getLoginRequest(test_email, null);
+
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .content(requestContent)
+                                .contentType("application/json"))
+                .andExpect(status().isBadRequest());
+    }
+
 
     @Test
     @DisplayName("일치하지 않는 비밀번호로 로그인 요청을 보내면 Forbidden 상태를 반환한다.")
@@ -248,11 +294,12 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("회원가입 요청 시에 email 이 없으면 에러 메세지와 400 상태를 반환한다. - Validation Error")
+    @DisplayName("회원가입 요청 시에 email 이 null 이면 에러 메세지와 400 상태를 반환한다. - Validation Error")
     public void test_08() throws Exception {
 
         // given
-        String request = getLoginRequest(null, test_password);
+        String request = getRegisterRequest(null, test_password,
+                "123", "seoul", "songpa", "12345");
 
         // when
         mockMvc.perform(
@@ -265,13 +312,80 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("회원가입 시에 email 이 이메일 형태를 갖지 않으면 400 상태를 반환한다.")
+    public void test_08_1() throws Exception {
+
+        String request = getRegisterRequest("test", test_password,
+                "123", "seoul", "songpa", "12345");
+
+        mockMvc.perform(
+                post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request)
+        )
+                .andExpect(status().isBadRequest())
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원가입 시에 username 이 없거나 너무 짧으면 400 상태를 반환한다.")
+    public void test_08_2() throws Exception {
+
+        String request = getRegisterRequest(test_email, test_password,
+                "12", "seoul", "songpa", "12345");
+
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isBadRequest())
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원가입 시에 주소 값이 완전하지 않을 경우 400 상태를 반환한다.")
+    public void test_08_3() throws Exception {
+
+        String request = getRegisterRequest(test_email, test_password,
+                "12", "seoul", null, "12345");
+
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isBadRequest())
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원가입 시에 비밀번호가 너무 짧을 경우 400 상태를 반환한다.")
+    public void test_08_4() throws Exception {
+
+        String request = getRegisterRequest(test_email, "123",
+                "12", "seoul", "songpa", "12345");
+
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isBadRequest())
+                .andReturn();
+    }
+
+    @Test
     @DisplayName("중복된 email 로 회원가입을 요청하면 에러 메세지와 400 상태를 반환한다.")
     public void test_09() throws Exception {
 
         // given
         String request = getLoginRequest("test@naver.com", test_password);
+        User user = getDefaultUser(1L, "test@naver.com", new Address("seoul", "songpa", "12345"));
+
 
         // when
+        when(mockUserRepository.findByEmail("test@naver.com")).thenReturn(Optional.ofNullable(user));
         mockMvc.perform(
                 post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
