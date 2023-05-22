@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.deliveryservice.common.entity.Address;
 import com.project.deliveryservice.common.entity.ExtendedTimeEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 @Entity
@@ -23,6 +24,7 @@ public class User extends ExtendedTimeEntity {
     private String password;
 
     @Column(nullable = false)
+    @Size(min = 3, max= 12)
     private String username;
 
     @ManyToOne
