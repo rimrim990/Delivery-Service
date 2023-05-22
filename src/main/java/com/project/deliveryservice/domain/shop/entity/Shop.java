@@ -3,6 +3,7 @@ package com.project.deliveryservice.domain.shop.entity;
 import com.project.deliveryservice.common.entity.Address;
 import com.project.deliveryservice.common.entity.ExtendedTimeEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalTime;
@@ -23,13 +24,14 @@ public class Shop extends ExtendedTimeEntity {
     public Category category;
 
     @Column(nullable = false)
-    // 최소 주문 금액
+    // 최소 주문 금
     public int minPrice;
 
     @Embedded
     @Column(nullable = false)
     public Address address;
 
+    @Size(min=10, max=100)
     @Column(nullable = false)
     // 가게 설명
     public String description;
