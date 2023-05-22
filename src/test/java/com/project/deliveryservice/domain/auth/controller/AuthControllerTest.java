@@ -2,10 +2,12 @@ package com.project.deliveryservice.domain.auth.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.deliveryservice.common.constants.AuthConstants;
+import com.project.deliveryservice.common.entity.Address;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
+import com.project.deliveryservice.domain.auth.dto.RegisterRequest;
+import com.project.deliveryservice.domain.user.dto.UserInfoDto;
 import com.project.deliveryservice.domain.user.entity.Role;
 import com.project.deliveryservice.domain.user.entity.Level;
 import com.project.deliveryservice.domain.user.entity.User;
@@ -14,6 +16,7 @@ import com.project.deliveryservice.jwt.JwtInvalidException;
 import com.project.deliveryservice.jwt.JwtTokenDto;
 import com.project.deliveryservice.jwt.JwtTokenProvider;
 import com.project.deliveryservice.utils.ApiUtils.ApiResponse;
+import com.project.deliveryservice.utils.JsonUtils;
 import com.project.deliveryservice.utils.JwtUtils;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -32,8 +36,8 @@ import java.security.Key;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -48,7 +52,7 @@ class AuthControllerTest {
     @Autowired
     PasswordEncoder passwordEncoder;
     @Autowired
-    ObjectMapper objectMapper;
+    JsonUtils jsonUtils;
     @Value("${jwt.secret}")
     String secret;
     @Value("${jwt.refresh-secret}")
@@ -59,8 +63,8 @@ class AuthControllerTest {
     @MockBean
     UserRepository mockUserRepository;
 
-    private final String test_email = "test";
-    private final String test_password = "1234";
+    private final String test_email = "test@google.com";
+    private final String test_password = "1234567890";
     private final String test_authority = "ROLE_ADMIN";
 
     private Key secretKey;
@@ -84,9 +88,28 @@ class AuthControllerTest {
                 .build();
     }
 
+    User getDefaultUser(Long id, String email, Address address) {
+        return User.builder()
+                .id(id)
+                .email(email)
+                .address(address)
+                .level(Level.builder().name("고마운분").build())
+                .build();
+    }
+
+    <T> ApiResponse<T> deserializeApiResponse(String json, Class<T> clazz) throws JsonProcessingException {
+        JavaType javaType = jsonUtils.getParametricType(ApiResponse.class, clazz);
+        return jsonUtils.deserialize(json, javaType);
+    }
+
     String getLoginRequest(String email, String password) throws JsonProcessingException {
         LoginRequest loginRequest = new LoginRequest(email, password);
-        return objectMapper.writeValueAsString(loginRequest);
+        return jsonUtils.serialize(loginRequest);
+    }
+
+    String getRegisterRequest(String email, String password, String username, String city, String street, String zipCode) throws JsonProcessingException {
+        RegisterRequest registerRequest = new RegisterRequest(email, password, username, city, street, zipCode);
+        return jsonUtils.serialize(registerRequest);
     }
 
     private String getAccessToken() {
@@ -110,8 +133,48 @@ class AuthControllerTest {
                         .contentType("application/json"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("data").value(nullValue()))
-                .andExpect(jsonPath("errorMsg").value("test is not found"));
+                .andExpect(jsonPath("errorMsg").value(test_email + " is not found"));
     }
+
+    @Test
+    @DisplayName("email 이 없으면 400 상태를 반환한다")
+    public void test_01_1() throws Exception {
+
+        String requestContent = getLoginRequest(null, test_password);
+
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .content(requestContent)
+                                .contentType("application/json"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("로그인 요청 시에 email 이 올바른 형태가 아니면 400 상태를 반환한다")
+    public void test_01_2() throws Exception {
+
+        String requestContent = getLoginRequest("test", test_password);
+
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .content(requestContent)
+                                .contentType("application/json"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("로그인 요청 시에 비밀번호가 없으면 400 상태를 반환한다")
+    public void test_01_3() throws Exception {
+
+        String requestContent = getLoginRequest(test_email, null);
+
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .content(requestContent)
+                                .contentType("application/json"))
+                .andExpect(status().isBadRequest());
+    }
+
 
     @Test
     @DisplayName("일치하지 않는 비밀번호로 로그인 요청을 보내면 Forbidden 상태를 반환한다.")
@@ -152,8 +215,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("errorMsg").value(nullValue()))
                 .andReturn();
 
-        JavaType javaType = objectMapper.getTypeFactory().constructParametricType(ApiResponse.class, JwtTokenDto.class);
-        ApiResponse<JwtTokenDto> res = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), javaType);
+        ApiResponse<JwtTokenDto> res = deserializeApiResponse(mvcResult.getResponse().getContentAsString(), JwtTokenDto.class);
         assertThat(res.getData().getAccessToken(), equalTo(accessToken));
         assertThat(res.getData().getRefreshToken(), equalTo(refreshToken));
         assertThat(res.getData().getGrantType(), equalTo(AuthConstants.GRANT_TYPE_BEARER));
@@ -205,8 +267,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("errorMsg").value(nullValue()))
                 .andReturn();
 
-        JavaType javaType = objectMapper.getTypeFactory().constructParametricType(ApiResponse.class, JwtTokenDto.class);
-        ApiResponse<JwtTokenDto> res = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), javaType);
+        ApiResponse<JwtTokenDto> res = deserializeApiResponse(mvcResult.getResponse().getContentAsString(), JwtTokenDto.class);
         assertThat(res.getData().getAccessToken(), equalTo(accessToken));
         assertThat(res.getData().getRefreshToken(), equalTo(refreshToken));
         assertThat(res.getData().getGrantType(), equalTo(AuthConstants.GRANT_TYPE_BEARER));
@@ -230,5 +291,181 @@ class AuthControllerTest {
                 .andExpect(jsonPath("data").value(nullValue()))
                 .andExpect(jsonPath("errorMsg").value(ErrorMsg.DIFFERENT_SIGNATURE_KEY))
                 .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원가입 요청 시에 email 이 null 이면 에러 메세지와 400 상태를 반환한다. - Validation Error")
+    public void test_08() throws Exception {
+
+        // given
+        String request = getRegisterRequest(null, test_password,
+                "123", "seoul", "songpa", "12345");
+
+        // when
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("email must not be empty"))
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원가입 시에 email 이 이메일 형태를 갖지 않으면 400 상태를 반환한다.")
+    public void test_08_1() throws Exception {
+
+        String request = getRegisterRequest("test", test_password,
+                "123", "seoul", "songpa", "12345");
+
+        mockMvc.perform(
+                post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request)
+        )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("email must be a well-formed email address"))
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원가입 시에 username 이 없으면 400 상태를 반환한다.")
+    public void test_08_2() throws Exception {
+
+        String request = getRegisterRequest(test_email, test_password,
+                null, "seoul", "songpa", "12345");
+
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("username must not be empty"))
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원가입 시에 username 이 너무 짧으면 400 상태를 반환한다.")
+    public void test_08_3() throws Exception {
+
+        String request = getRegisterRequest(test_email, test_password,
+                "12", "seoul", "songpa", "12345");
+
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("username length must be between 3 and 12"))
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원가입 시에 username 이 너무 길면 400 상태를 반환한다.")
+    public void test_08_4() throws Exception {
+
+        String request = getRegisterRequest(test_email, test_password,
+                "123456789101112131415", "seoul", "songpa", "12345");
+
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("username length must be between 3 and 12"))
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원가입 시에 주소 값이 완전하지 않을 경우 400 상태를 반환한다.")
+    public void test_08_5() throws Exception {
+
+        String request = getRegisterRequest(test_email, test_password,
+                "123", "seoul", null, "12345");
+
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("street must not be empty"))
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원가입 시에 주소 값의 zipcode 가 숫자 포맷이 아닐 경우 400 상태를 반환한다.")
+    public void test_08_6() throws Exception {
+
+        String request = getRegisterRequest(test_email, test_password,
+                "123", "seoul",  "songpa", "12345a");
+
+        mockMvc.perform(
+                        post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(request)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value("zipCode must only contain numeric value"))
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("중복된 email 로 회원가입을 요청하면 에러 메세지와 403 상태를 반환한다.")
+    public void test_09() throws Exception {
+
+        // given
+        String request = getRegisterRequest(test_email, test_password, "test",
+                "seoul", "songpa" , "12345");
+        User user = getDefaultUser(1L, test_email, new Address("seoul", "songpa", "12345"));
+
+        // when
+        when(mockUserRepository.findByEmail(test_email)).thenReturn(Optional.ofNullable(user));
+        mockMvc.perform(
+                post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request)
+        )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("data").value(nullValue()))
+                .andExpect(jsonPath("errorMsg").value(test_email + ErrorMsg.DUPLICATED))
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("회원 가입에 성공하면 UserInfoDto 와 201 상태를 반환한다.")
+    public void test_10() throws Exception {
+
+        // given
+        String request = getRegisterRequest(test_email, test_password, "test",
+                "seoul", "songpa" , "12345");
+        Address address = new Address("seoul", "songpa", "012345");
+        User user = getDefaultUser(1L, "test@gmail.com", address);
+
+        // when
+        when(mockUserRepository.save(any())).thenReturn(user);
+        MvcResult mvcResult = mockMvc.perform(
+                post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request)
+        )
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        ApiResponse<UserInfoDto> res = deserializeApiResponse(mvcResult.getResponse().getContentAsString(), UserInfoDto.class);
+        assertThat(res.getErrorMsg(), is(nullValue()));
+        assertThat(res.getData().getAddress(), equalTo(address.toString()));
+        assertThat(res.getData().getEmail(), equalTo("test@gmail.com"));
+        assertThat(res.getData().getLevel(), equalTo("고마운분"));
     }
 }

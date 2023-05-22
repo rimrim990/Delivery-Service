@@ -6,8 +6,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.project.deliveryservice.utils.ApiUtils.fail;
 
@@ -30,6 +34,24 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiResponse> handleBadCredentialsException(BadCredentialsException e) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(fail(e.getMessage()));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse> handleValidationException(MethodArgumentNotValidException e) {
+        List<String> msg = e.getBindingResult()
+                .getFieldErrors().stream()
+                .map(err -> err.getField() + " " + err.getDefaultMessage())
+                .collect(Collectors.toList());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(fail(msg));
+    }
+
+    @ExceptionHandler(DuplicatedArgumentException.class)
+    public ResponseEntity<ApiResponse> handleDuplicatedArgumentException(DuplicatedArgumentException e) {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(fail(e.getMessage()));
