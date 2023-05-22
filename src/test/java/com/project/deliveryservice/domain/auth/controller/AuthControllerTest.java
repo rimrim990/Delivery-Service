@@ -2,7 +2,6 @@ package com.project.deliveryservice.domain.auth.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
@@ -15,6 +14,7 @@ import com.project.deliveryservice.jwt.JwtInvalidException;
 import com.project.deliveryservice.jwt.JwtTokenDto;
 import com.project.deliveryservice.jwt.JwtTokenProvider;
 import com.project.deliveryservice.utils.ApiUtils.ApiResponse;
+import com.project.deliveryservice.utils.JsonUtils;
 import com.project.deliveryservice.utils.JwtUtils;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +50,7 @@ class AuthControllerTest {
     @Autowired
     PasswordEncoder passwordEncoder;
     @Autowired
-    ObjectMapper objectMapper;
+    JsonUtils jsonUtils;
     @Value("${jwt.secret}")
     String secret;
     @Value("${jwt.refresh-secret}")
@@ -86,9 +86,14 @@ class AuthControllerTest {
                 .build();
     }
 
+    <T> ApiResponse<T> deserializeApiResponse(String json, Class<T> clazz) throws JsonProcessingException {
+        JavaType javaType = jsonUtils.getParametricType(ApiResponse.class, clazz);
+        return jsonUtils.deserialize(json, javaType);
+    }
+
     String getLoginRequest(String email, String password) throws JsonProcessingException {
         LoginRequest loginRequest = new LoginRequest(email, password);
-        return objectMapper.writeValueAsString(loginRequest);
+        return jsonUtils.serialize(loginRequest);
     }
 
     private String getAccessToken() {
@@ -154,8 +159,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("errorMsg").value(nullValue()))
                 .andReturn();
 
-        JavaType javaType = objectMapper.getTypeFactory().constructParametricType(ApiResponse.class, JwtTokenDto.class);
-        ApiResponse<JwtTokenDto> res = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), javaType);
+        ApiResponse<JwtTokenDto> res = deserializeApiResponse(mvcResult.getResponse().getContentAsString(), JwtTokenDto.class);
         assertThat(res.getData().getAccessToken(), equalTo(accessToken));
         assertThat(res.getData().getRefreshToken(), equalTo(refreshToken));
         assertThat(res.getData().getGrantType(), equalTo(AuthConstants.GRANT_TYPE_BEARER));
@@ -207,8 +211,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("errorMsg").value(nullValue()))
                 .andReturn();
 
-        JavaType javaType = objectMapper.getTypeFactory().constructParametricType(ApiResponse.class, JwtTokenDto.class);
-        ApiResponse<JwtTokenDto> res = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), javaType);
+        ApiResponse<JwtTokenDto> res = deserializeApiResponse(mvcResult.getResponse().getContentAsString(), JwtTokenDto.class);
         assertThat(res.getData().getAccessToken(), equalTo(accessToken));
         assertThat(res.getData().getRefreshToken(), equalTo(refreshToken));
         assertThat(res.getData().getGrantType(), equalTo(AuthConstants.GRANT_TYPE_BEARER));
@@ -286,8 +289,7 @@ class AuthControllerTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        JavaType javaType = objectMapper.getTypeFactory().constructParametricType(ApiResponse.class, UserInfoDto.class);
-        ApiResponse<UserInfoDto> res = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), javaType);
+        ApiResponse<UserInfoDto> res = deserializeApiResponse(mvcResult.getResponse().getContentAsString(), UserInfoDto.class);
         assertThat(res.getErrorMsg(), equalTo(nullValue()));
         assertThat(res.getData().getEmail(), equalTo("test@gmail.com"));
         assertThat(res.getData().getLevel(), equalTo("고마운분"));
