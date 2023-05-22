@@ -17,6 +17,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -35,6 +36,8 @@ import static org.mockito.Mockito.*;
 class AuthServiceTest {
 
     UserRepository mockUserRepository;
+
+    @Autowired
     LevelRepository mockLevelRepository;
     PasswordEncoder passwordEncoder;
     JwtTokenProvider mockJwtProvider;
@@ -50,7 +53,6 @@ class AuthServiceTest {
         mockUserRepository = Mockito.mock(UserRepository.class);
         passwordEncoder = new BCryptPasswordEncoder();
         mockJwtProvider = Mockito.mock(JwtTokenProvider.class);
-        mockLevelRepository = Mockito.mock(LevelRepository.class);
         authService = new AuthService(mockUserRepository, mockLevelRepository, mockJwtProvider, passwordEncoder);
     }
 
@@ -167,17 +169,15 @@ class AuthServiceTest {
     @DisplayName("회원가입에 성공하면 UserDto 를 반환해야 하며 초기 사용자 레벨은 고마운분이다.")
     public void test_09() {
         // given
-        Level level = Level.builder().name("고마운분").role(Role.valueOf(test_authority)).build();
-        User user = User.builder()
-                .id(1L)
-                .level(level)
-                .email(test_email)
-                .password(test_password)
-                .address(new Address("seoul", "songpa", "12345"))
-                .build();
         RegisterRequest request = RegisterRequest.builder()
                 .email(test_email)
                 .password(passwordEncoder.encode(test_password))
+                .build();
+        User user = User.builder()
+                .id(1L)
+                .email(test_email)
+                .address(new Address("seoul", "songpa", "12345"))
+                .level(Level.builder().name("고마운분").build())
                 .build();
 
         // when
@@ -187,7 +187,6 @@ class AuthServiceTest {
 
         // then
         verify(mockUserRepository, times(1)).findByEmail(test_email);
-        verify(mockLevelRepository, times(1)).findByName("고마운분");
 
         assertThat(dto.getId(), equalTo(1L));
         assertThat(dto.getLevel(), equalTo("고마운분"));
