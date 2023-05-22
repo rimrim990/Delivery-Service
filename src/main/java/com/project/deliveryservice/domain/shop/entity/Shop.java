@@ -21,21 +21,26 @@ public class Shop extends ExtendedTimeEntity {
     @Enumerated(value = EnumType.STRING)
     public Category category;
 
-    @Column(columnDefinition = "최소 주문 금액")
+    @Column()
+    // 최소 주문 금액
     public int minPrice;
 
     @Embedded
     public Address address;
 
-    @Column(columnDefinition = "가게 설명")
+    @Column()
+    // 가게 설명
     public String description;
 
-    @Column(columnDefinition = "휴무일")
+    @Column()
+    // 휴무일
     public int restDays;
 
-    @Column(columnDefinition = "영업 시작 시간")
+    @Column()
+    // 영업 시작 시간
     public LocalTime startTime;
 
-    @Column(columnDefinition = "영업 종료 시간")
+    @Column()
+    // 영업 종료 시간
     public LocalTime endTime;
 }

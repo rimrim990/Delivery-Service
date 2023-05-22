@@ -26,6 +26,7 @@ public class Item extends BaseTimeEntity {
 
     private int price;
 
-    @Column(columnDefinition = "사장님 추천 여부")
+    @Column()
+    // 사장님 추천 여부
     private boolean isRecommended;
 }
