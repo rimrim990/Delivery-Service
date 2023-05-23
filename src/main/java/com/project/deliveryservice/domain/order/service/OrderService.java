@@ -9,7 +9,7 @@ import com.project.deliveryservice.domain.order.entity.Order;
 import com.project.deliveryservice.domain.order.entity.OrderItem;
 import com.project.deliveryservice.domain.order.repository.OrderRepository;
 import com.project.deliveryservice.domain.user.entity.User;
-import com.project.deliveryservice.domain.user.repository.UserRepository;
+import com.project.deliveryservice.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,17 +20,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OrderService {
 
-    private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final DeliveryRepository deliveryRepository;
 
+    private final UserService userService;
     private final OrderItemService orderItemService;
 
     @Transactional
     public OrderInfo createOrder(long userId, OrderRequest request) {
         // userId 검증
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("user not exist"));
+        User user = userService.getUserOrThrowById(userId);
 
         // itemId 검증 후 OrderItem 생성
         List<OrderItem> orderItems = request.getOrderItems().stream()
