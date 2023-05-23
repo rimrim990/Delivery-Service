@@ -16,5 +16,5 @@ public class ErrorMsg {
 
     public static final String PASSWORD_NOT_MATCH = "password does not match";
 
-    public static final String DUPLICATED = " is already exist";
+    public static final String DUPLICATED = " already exist";
 }
