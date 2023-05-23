@@ -8,7 +8,7 @@ import com.project.deliveryservice.utils.JwtUtils;
 
 import java.security.Key;
 
-public class TestUtils {
+public abstract class TestUtils {
 
     public static final String testEmail = "test@naver.com";
 
