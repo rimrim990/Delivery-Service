@@ -2,7 +2,7 @@ package com.project.deliveryservice.domain.order.service;
 
 import com.project.deliveryservice.domain.item.entity.Item;
 import com.project.deliveryservice.domain.item.repository.ItemRepository;
-import com.project.deliveryservice.domain.order.dto.OrderInfoDto;
+import com.project.deliveryservice.domain.order.dto.OrderInfo;
 import com.project.deliveryservice.domain.order.dto.OrderItemRequest;
 import com.project.deliveryservice.domain.order.dto.OrderRequest;
 import com.project.deliveryservice.domain.order.repository.OrderRepository;
@@ -143,7 +143,7 @@ class OrderServiceTest {
         );
 
         // then
-        OrderInfoDto dto = orderService.createOrder(validUserId, orderRequest);
+        OrderInfo dto = orderService.createOrder(validUserId, orderRequest);
         assertEquals(dto.getOrderItems().size(),1);
     }
 
@@ -201,7 +201,7 @@ class OrderServiceTest {
                 when(mockItemRepository.findById(i.getId())).thenReturn(Optional.of(i)));
 
         // then
-        OrderInfoDto dto = orderService.createOrder(validUserId, orderRequest);
+        OrderInfo dto = orderService.createOrder(validUserId, orderRequest);
         assertEquals(dto.getOrderItems(), List.of());
     }
 
