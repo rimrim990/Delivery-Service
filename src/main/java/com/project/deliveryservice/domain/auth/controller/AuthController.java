@@ -4,7 +4,7 @@ import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.auth.service.AuthService;
 import com.project.deliveryservice.domain.auth.dto.RegisterRequest;
-import com.project.deliveryservice.domain.user.dto.UserInfoDto;
+import com.project.deliveryservice.domain.user.dto.UserInfo;
 import com.project.deliveryservice.jwt.JwtTokenDto;
 
 import com.project.deliveryservice.utils.ApiUtils.ApiResponse;
@@ -38,7 +38,7 @@ public class AuthController {
     }
 
     @PostMapping(value = "/register", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<ApiResponse<UserInfoDto>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<UserInfo>> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(success(authService.register(request)));
     }

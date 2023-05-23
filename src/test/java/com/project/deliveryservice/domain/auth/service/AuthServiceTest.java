@@ -6,7 +6,7 @@ import com.project.deliveryservice.common.exception.DuplicatedArgumentException;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.auth.dto.RegisterRequest;
-import com.project.deliveryservice.domain.user.dto.UserInfoDto;
+import com.project.deliveryservice.domain.user.dto.UserInfo;
 import com.project.deliveryservice.domain.user.entity.Level;
 import com.project.deliveryservice.domain.user.entity.User;
 import com.project.deliveryservice.domain.user.service.LevelService;
@@ -166,7 +166,7 @@ class AuthServiceTest {
 
         // when
         when(mockUserService.save(any())).thenReturn(user);
-        UserInfoDto dto = authService.register(request);
+        UserInfo dto = authService.register(request);
 
         // then
         verify(mockUserService, times(1)).throwIfUserExistByEmail(testEmail);

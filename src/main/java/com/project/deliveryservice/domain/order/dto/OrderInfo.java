@@ -3,7 +3,7 @@ package com.project.deliveryservice.domain.order.dto;
 import com.project.deliveryservice.domain.order.entity.Order;
 import com.project.deliveryservice.domain.order.entity.OrderStatus;
 import com.project.deliveryservice.domain.shop.dto.ShopInfo;
-import com.project.deliveryservice.domain.user.dto.UserInfoDto;
+import com.project.deliveryservice.domain.user.dto.UserInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -24,7 +24,7 @@ public class OrderInfo {
     private ShopInfo shop;
 
     // 주문자
-    private UserInfoDto user;
+    private UserInfo user;
 
     // 주문 아이템
     private List<OrderItemInfo> orderItems;
@@ -41,7 +41,7 @@ public class OrderInfo {
                 .collect(Collectors.toList());
         return OrderInfo.builder()
                 .orderId(source.getId())
-                .user(UserInfoDto.of(source.getUser()))
+                .user(UserInfo.of(source.getUser()))
                 .orderItems(orderItems)
                 .createdAt(source.getCreatedAt())
                 .build();

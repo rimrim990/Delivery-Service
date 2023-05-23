@@ -5,7 +5,7 @@ import com.project.deliveryservice.common.entity.Address;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.auth.dto.RegisterRequest;
-import com.project.deliveryservice.domain.user.dto.UserInfoDto;
+import com.project.deliveryservice.domain.user.dto.UserInfo;
 import com.project.deliveryservice.domain.user.entity.Level;
 import com.project.deliveryservice.domain.user.entity.Role;
 import com.project.deliveryservice.domain.user.entity.User;
@@ -68,7 +68,7 @@ public class AuthService {
                 .build();
     }
 
-    public UserInfoDto register(RegisterRequest request) {
+    public UserInfo register(RegisterRequest request) {
         // 동일한 이메일로 이미 회원가입 되어있음
         userService.throwIfUserExistByEmail(request.getEmail());
         // 기본 레벨 조회
@@ -82,6 +82,6 @@ public class AuthService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .address(address).build();
 
-        return UserInfoDto.of(userService.save(user));
+        return UserInfo.of(userService.save(user));
     }
 }

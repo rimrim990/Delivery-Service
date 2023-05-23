@@ -7,7 +7,7 @@ import com.project.deliveryservice.common.entity.Address;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.auth.dto.RegisterRequest;
-import com.project.deliveryservice.domain.user.dto.UserInfoDto;
+import com.project.deliveryservice.domain.user.dto.UserInfo;
 import com.project.deliveryservice.domain.user.entity.User;
 import com.project.deliveryservice.domain.user.repository.UserRepository;
 import com.project.deliveryservice.jwt.JwtInvalidException;
@@ -428,7 +428,7 @@ class AuthControllerTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        ApiResponse<UserInfoDto> res = deserializeApiResponse(mvcResult.getResponse().getContentAsString(), UserInfoDto.class);
+        ApiResponse<UserInfo> res = deserializeApiResponse(mvcResult.getResponse().getContentAsString(), UserInfo.class);
         assertThat(res.getErrorMsg(), is(nullValue()));
         assertThat(res.getData().getAddress(), equalTo(address.toString()));
         assertThat(res.getData().getEmail(), equalTo("test@gmail.com"));
