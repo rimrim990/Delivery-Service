@@ -1,13 +1,13 @@
 package com.project.deliveryservice.domain.order.service;
 
+import com.project.deliveryservice.domain.delivery.repository.DeliveryRepository;
 import com.project.deliveryservice.domain.item.entity.Item;
-import com.project.deliveryservice.domain.item.repository.ItemRepository;
 import com.project.deliveryservice.domain.order.dto.OrderInfo;
 import com.project.deliveryservice.domain.order.dto.OrderItemRequest;
 import com.project.deliveryservice.domain.order.dto.OrderRequest;
 import com.project.deliveryservice.domain.order.repository.OrderRepository;
 import com.project.deliveryservice.domain.user.entity.User;
-import com.project.deliveryservice.domain.user.repository.UserRepository;
+import com.project.deliveryservice.domain.user.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,7 +15,6 @@ import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
@@ -25,17 +24,20 @@ import static org.mockito.Mockito.when;
 class OrderServiceTest {
 
     OrderRepository mockOrderRepository;
-    ItemRepository mockItemRepository;
-    UserRepository mockUserRepository;
+    DeliveryRepository mockDeliveryRepository;
+
+    UserService mockUserService;
+    OrderItemService mockOrderItemService;
 
     OrderService orderService;
 
     @BeforeEach
     void setup() {
         mockOrderRepository = Mockito.mock(OrderRepository.class);
-        mockItemRepository = Mockito.mock(ItemRepository.class);
-        mockUserRepository = Mockito.mock(UserRepository.class);
-        orderService = new OrderService(mockUserRepository, mockItemRepository, mockOrderRepository);
+        mockDeliveryRepository = Mockito.mock(DeliveryRepository.class);
+        mockUserService = Mockito.mock(UserService.class);
+        mockOrderItemService = Mockito.mock(OrderItemService.class);
+        orderService = new OrderService(mockOrderRepository, mockDeliveryRepository, mockUserService, mockOrderItemService);
     }
 
     private static final int MAX_ITEM_LIMIT = 999;
@@ -64,9 +66,6 @@ class OrderServiceTest {
 
         // when
         // Exception ! - 아이템 정보가 종재하지 않음
-        for (OrderItemRequest orderItemRequest : orderItemRequests) {
-            when(mockItemRepository.findById(orderItemRequest.getItemId())).thenReturn(null);
-        }
 
         // 주문 생성 - TODO: Exception 수정
         Throwable throwable = assertThrows(IllegalArgumentException.class,
@@ -88,11 +87,10 @@ class OrderServiceTest {
         OrderRequest orderRequest = getOrderRequest(orderItemRequests);
 
         // when
-        for (OrderItemRequest orderItemRequest : orderItemRequests) {
-            when(mockItemRepository.findById(orderItemRequest.getItemId())).thenReturn(null);
-        }
+
         // Exception ! - 사용자 정보가 존재하지 않음
-        when(mockUserRepository.findById(invalidUserId)).thenReturn(null);
+        when(mockUserService.getUserOrThrowById(invalidUserId))
+                .thenThrow(new IllegalArgumentException("invalid user id"));
 
         // 주문 생성 - TODO: Exception 수정
         Throwable throwable = assertThrows(IllegalArgumentException.class,
@@ -114,11 +112,8 @@ class OrderServiceTest {
         OrderRequest orderRequest = getOrderRequest(orderItemRequests);
 
         // when
-        when(mockItemRepository.findById(validItemId)).thenReturn(
-                Optional.ofNullable(Item.builder().build())
-        );
-        when(mockUserRepository.findById(validUserId)).thenReturn(
-                Optional.ofNullable(User.builder().build())
+        when(mockUserService.getUserOrThrowById(validUserId)).thenReturn(
+                User.builder().build()
         );
 
         // 주문 생성 - TODO: Exception 수정
@@ -142,11 +137,8 @@ class OrderServiceTest {
         OrderRequest orderRequest = getOrderRequest(orderItemRequests);
 
         // when
-        orderItemRequests.forEach(oi -> when(mockItemRepository.findById(oi.getItemId()))
-                                .thenReturn(Optional.ofNullable(Item.builder().build())));
-        when(mockUserRepository.findById(validUserId)).thenReturn(
-                Optional.ofNullable(User.builder().build())
-        );
+        when(mockUserService.getUserOrThrowById(validUserId))
+                .thenReturn(User.builder().build());
 
         // then
         OrderInfo dto = orderService.createOrder(validUserId, orderRequest);
@@ -201,10 +193,8 @@ class OrderServiceTest {
         OrderRequest orderRequest = getOrderRequest(orderItemRequests);
 
         // when
-        when(mockUserRepository.findById(validUserId))
-                .thenReturn(Optional.ofNullable(User.builder().build()));
-        items.forEach(i ->
-                when(mockItemRepository.findById(i.getId())).thenReturn(Optional.of(i)));
+        when(mockUserService.getUserOrThrowById(validUserId))
+                .thenReturn(User.builder().build());
 
         // then
         OrderInfo dto = orderService.createOrder(validUserId, orderRequest);
