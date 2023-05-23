@@ -12,7 +12,7 @@ import org.hibernate.validator.constraints.Range;
 public class OrderItemRequest {
 
     @NotNull
-    private int itemId;
+    private long itemId;
 
     @NotNull
     private int price;
