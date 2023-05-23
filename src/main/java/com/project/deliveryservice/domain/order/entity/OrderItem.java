@@ -28,5 +28,5 @@ public class OrderItem extends BaseTimeEntity {
     private int price;
 
     @Column(nullable = false)
-    private int amount;
+    private int quantity;
 }
