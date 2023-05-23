@@ -16,6 +16,7 @@ import org.springframework.security.core.GrantedAuthority;
 import java.security.Key;
 import java.util.Collection;
 
+import static com.project.deliveryservice.TestUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.isA;
@@ -24,13 +25,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 class JwtAuthenticationProviderTest {
 
-    private final int expireMin = 10;
     @Value("${jwt.secret}")
     private String secret;
     private Key secretKey;
-
-    private final String test_email = "test";
-    private final String test_authority = "ROLE_ADMIN";
 
     JwtAuthenticationProvider provider;
 
@@ -62,7 +59,7 @@ class JwtAuthenticationProviderTest {
 
         String invalidSecret = "invalidSecretKeyInvalidInvalidInvalidinvalidSecretKeyInvalidInvalidInvalidinvalidSecret";
         Key invalidSecretKey = JwtUtils.generateKey(invalidSecret);
-        String invalidToken = JwtUtils.createJwtToken(test_email, test_authority, expireMin, invalidSecretKey);
+        String invalidToken = JwtUtils.createJwtToken(testEmail, testAuthority, testExpireMin, invalidSecretKey);
         JwtAuthenticationToken authentication = new JwtAuthenticationToken(invalidToken);
 
         Throwable throwable = assertThrows(JwtInvalidException.class, () -> provider.authenticate(authentication));
@@ -75,7 +72,7 @@ class JwtAuthenticationProviderTest {
     @DisplayName("만료된 토큰을 인자로 authentication 을 호출하면 JwtInvalidException 을 던진다.")
     public void test_04() {
 
-        String invalidToken = JwtUtils.createJwtToken(test_email, test_authority, -expireMin, secretKey);
+        String invalidToken = JwtUtils.createJwtToken(testEmail, testAuthority, -testExpireMin, secretKey);
         JwtAuthenticationToken authentication = new JwtAuthenticationToken(invalidToken);
 
         Throwable throwable = assertThrows(JwtInvalidException.class, () -> provider.authenticate(authentication));
@@ -112,16 +109,16 @@ class JwtAuthenticationProviderTest {
     @DisplayName("유효한 토큰을 인자로 authentication 을 호출하면 authentication 을 반환한다.")
     public void test_07() {
 
-        String validToken = JwtUtils.createJwtToken(test_email, test_authority, expireMin, secretKey);
+        String validToken = JwtUtils.createJwtToken(testEmail, testAuthority, testExpireMin, secretKey);
         JwtAuthenticationToken authentication = new JwtAuthenticationToken(validToken);
 
         Authentication authenticated = provider.authenticate(authentication);
 
-        assertThat(authenticated.getPrincipal(), equalTo(test_email));
+        assertThat(authenticated.getPrincipal(), equalTo(testEmail));
         assertThat(authenticated.getCredentials(), equalTo(""));
         Collection<? extends GrantedAuthority> authorities = authenticated.getAuthorities();
         for (GrantedAuthority grantedAuthority : authorities) {
-            assertThat(grantedAuthority.getAuthority(), equalTo(test_authority));
+            assertThat(grantedAuthority.getAuthority(), equalTo(testAuthority));
         }
     }
 }
