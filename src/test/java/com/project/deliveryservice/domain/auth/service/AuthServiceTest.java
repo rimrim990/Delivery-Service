@@ -2,14 +2,15 @@ package com.project.deliveryservice.domain.auth.service;
 
 import com.project.deliveryservice.common.constants.AuthConstants;
 import com.project.deliveryservice.common.entity.Address;
+import com.project.deliveryservice.common.exception.DuplicatedArgumentException;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.auth.dto.RegisterRequest;
 import com.project.deliveryservice.domain.user.dto.UserInfoDto;
 import com.project.deliveryservice.domain.user.entity.Level;
 import com.project.deliveryservice.domain.user.entity.User;
-import com.project.deliveryservice.domain.user.repository.LevelRepository;
-import com.project.deliveryservice.domain.user.repository.UserRepository;
+import com.project.deliveryservice.domain.user.service.LevelService;
+import com.project.deliveryservice.domain.user.service.UserService;
 import com.project.deliveryservice.jwt.JwtInvalidException;
 import com.project.deliveryservice.jwt.JwtTokenDto;
 import com.project.deliveryservice.jwt.JwtTokenProvider;
@@ -17,7 +18,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,7 +25,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Collections;
-import java.util.Optional;
 
 import static com.project.deliveryservice.TestUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,10 +35,9 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 class AuthServiceTest {
 
-    UserRepository mockUserRepository;
+    UserService mockUserService;
+    LevelService mockLevelService;
 
-    @Autowired
-    LevelRepository mockLevelRepository;
     PasswordEncoder passwordEncoder;
     JwtTokenProvider mockJwtProvider;
 
@@ -47,10 +45,11 @@ class AuthServiceTest {
 
     @BeforeEach
     public void setup() {
-        mockUserRepository = Mockito.mock(UserRepository.class);
+        mockUserService = Mockito.mock(UserService.class);
+        mockLevelService = Mockito.mock(LevelService.class);
         passwordEncoder = new BCryptPasswordEncoder();
         mockJwtProvider = Mockito.mock(JwtTokenProvider.class);
-        authService = new AuthService(mockUserRepository, mockLevelRepository, mockJwtProvider, passwordEncoder);
+        authService = new AuthService(mockUserService, mockLevelService, mockJwtProvider, passwordEncoder);
     }
 
     @Test
@@ -58,6 +57,8 @@ class AuthServiceTest {
     public void test_01() {
 
         LoginRequest loginRequest = new LoginRequest(testEmail, testPassword);
+        when(mockUserService.getUserOrThrowByEmail(testEmail))
+                .thenThrow(new UsernameNotFoundException(testEmail + " is not found"));
 
         Throwable throwable = assertThrows(UsernameNotFoundException.class, () -> authService.login(loginRequest));
 
@@ -69,11 +70,8 @@ class AuthServiceTest {
     public void test_02() {
 
         LoginRequest loginRequest = new LoginRequest(testEmail, testPassword);
-        when(mockUserRepository.findByEmail(testEmail)).thenReturn(
-                Optional.of(
-                        getTestUser(testEmail, "12345", testAuthority)
-                )
-        );
+        when(mockUserService.getUserOrThrowByEmail(testEmail))
+                .thenReturn(getTestUser(testEmail, "12345", testAuthority));
 
         Throwable throwable = assertThrows(BadCredentialsException.class, () -> authService.login(loginRequest));
 
@@ -86,7 +84,7 @@ class AuthServiceTest {
 
         LoginRequest loginRequest = new LoginRequest(testEmail, testPassword);
         User user = getTestUser(testEmail, passwordEncoder.encode(testPassword), testAuthority);
-        when(mockUserRepository.findByEmail(testEmail)).thenReturn(Optional.of(user));
+        when(mockUserService.getUserOrThrowByEmail(testEmail)).thenReturn(user);
         when(mockJwtProvider.createAccessToken(testEmail, testAuthority)).thenReturn("accessToken");
         when(mockJwtProvider.createRefreshToken(testEmail, testAuthority)).thenReturn("refreshToken");
 
@@ -123,7 +121,7 @@ class AuthServiceTest {
         Claims claims = Jwts.claims().setSubject(testEmail);
         claims.put(AuthConstants.KEY_ROLES, Collections.singleton(testAuthority));
 
-        when(mockUserRepository.findByEmail(testEmail)).thenReturn(Optional.of(user));
+        when(mockUserService.getUserOrThrowByEmail(testEmail)).thenReturn(user);
         when(mockJwtProvider.parseClaimsFromRefreshToken("refreshToken")).thenReturn(claims);
         when(mockJwtProvider.createAccessToken(testEmail, testAuthority)).thenReturn("accessToken");
         when(mockJwtProvider.createRefreshToken(testEmail, testAuthority)).thenReturn("refreshToken");
@@ -138,12 +136,13 @@ class AuthServiceTest {
     @Test
     @DisplayName("동일한 이메일로 회원가입을 시도하면 에러를 던진다.")
     public void test_07() {
-        User user = getTestUser(testEmail, testPassword, testAuthority);
         RegisterRequest request = RegisterRequest.builder()
                 .email(testEmail)
                 .password(passwordEncoder.encode(testPassword))
                 .build();
-        when(mockUserRepository.findByEmail(testEmail)).thenReturn(Optional.of(user));
+
+        doThrow(new DuplicatedArgumentException(testEmail + ErrorMsg.DUPLICATED))
+                .when(mockUserService).throwIfUserExistByEmail(testEmail);
 
         Throwable throwable = assertThrows(RuntimeException.class, () -> authService.register(request));
 
@@ -166,12 +165,11 @@ class AuthServiceTest {
                 .build();
 
         // when
-        when(mockUserRepository.findByEmail(testEmail)).thenReturn(Optional.empty());
-        when(mockUserRepository.save(any())).thenReturn(user);
+        when(mockUserService.save(any())).thenReturn(user);
         UserInfoDto dto = authService.register(request);
 
         // then
-        verify(mockUserRepository, times(1)).findByEmail(testEmail);
+        verify(mockUserService, times(1)).throwIfUserExistByEmail(testEmail);
 
         assertThat(dto.getId(), equalTo(1L));
         assertThat(dto.getLevel(), equalTo("고마운분"));
