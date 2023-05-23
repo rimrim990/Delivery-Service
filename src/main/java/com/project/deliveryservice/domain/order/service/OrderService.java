@@ -1,8 +1,7 @@
 package com.project.deliveryservice.domain.order.service;
 
-import com.project.deliveryservice.common.entity.Address;
 import com.project.deliveryservice.domain.delivery.entity.Delivery;
-import com.project.deliveryservice.domain.delivery.repository.DeliveryRepository;
+import com.project.deliveryservice.domain.delivery.service.DeliveryService;
 import com.project.deliveryservice.domain.order.dto.OrderInfo;
 import com.project.deliveryservice.domain.order.dto.OrderRequest;
 import com.project.deliveryservice.domain.order.entity.Order;
@@ -21,8 +20,7 @@ import java.util.List;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final DeliveryRepository deliveryRepository;
-
+    private final DeliveryService deliveryService;
     private final UserService userService;
     private final OrderItemService orderItemService;
 
@@ -37,10 +35,9 @@ public class OrderService {
                 .toList();
 
         // 배달 정보 생성
-        Address address = new Address(request.getCity(), request.getStreet(), request.getZipCode());
-        Delivery delivery = Delivery.builder()
-                .address(address)
-                .build();
+        Delivery delivery = deliveryService.createDelivery(
+                request.getCity(), request.getStreet(), request.getZipCode()
+        );
 
         // 주문 생성
         Order order = new Order(user, delivery, orderItems);
