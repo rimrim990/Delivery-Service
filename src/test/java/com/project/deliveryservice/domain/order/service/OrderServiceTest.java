@@ -8,9 +8,10 @@ import com.project.deliveryservice.domain.order.dto.OrderRequest;
 import com.project.deliveryservice.domain.order.repository.OrderRepository;
 import com.project.deliveryservice.domain.user.entity.User;
 import com.project.deliveryservice.domain.user.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,14 +24,19 @@ import static org.mockito.Mockito.when;
 
 class OrderServiceTest {
 
-    @MockBean
     OrderRepository mockOrderRepository;
-    @MockBean
     ItemRepository mockItemRepository;
-    @MockBean
     UserRepository mockUserRepository;
 
     OrderService orderService;
+
+    @BeforeEach
+    void setup() {
+        mockOrderRepository = Mockito.mock(OrderRepository.class);
+        mockItemRepository = Mockito.mock(ItemRepository.class);
+        mockUserRepository = Mockito.mock(UserRepository.class);
+        orderService = new OrderService(mockUserRepository, mockItemRepository, mockOrderRepository);
+    }
 
     private static final int MAX_ITEM_LIMIT = 999;
 
