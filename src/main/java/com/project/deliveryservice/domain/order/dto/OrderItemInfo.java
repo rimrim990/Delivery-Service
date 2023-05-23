@@ -1,5 +1,6 @@
 package com.project.deliveryservice.domain.order.dto;
 
+import com.project.deliveryservice.domain.order.entity.OrderItem;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,4 +21,13 @@ public class OrderItemInfo {
 
     // 주문한 아이템 가격
     private int price;
+
+    public static OrderItemInfo of(OrderItem source) {
+        return OrderItemInfo.builder()
+                .itemId(source.getItem().getId())
+                .itemName(source.getItem().getName())
+                .quantity(source.getQuantity())
+                .price(source.getPrice())
+                .build();
+    }
 }
