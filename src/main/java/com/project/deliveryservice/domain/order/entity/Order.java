@@ -42,4 +42,9 @@ public class Order extends ExtendedTimeEntity {
 
     // 주문 취소 시각
     private LocalDateTime canceledAt;
+
+    public void setOrderItems(List<OrderItem> orderItems) {
+        orderItems.forEach(oi -> oi.setOrder(this));
+        this.orderItems = orderItems;
+    }
 }

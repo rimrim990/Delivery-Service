@@ -29,4 +29,8 @@ public class OrderItem extends BaseTimeEntity {
 
     @Column(nullable = false)
     private int quantity;
+
+    public void setOrder(Order order) {
+        this.order = order;
+    }
 }
