@@ -1,6 +1,6 @@
 package com.project.deliveryservice.domain.order.service;
 
-import com.project.deliveryservice.domain.delivery.repository.DeliveryRepository;
+import com.project.deliveryservice.domain.delivery.service.DeliveryService;
 import com.project.deliveryservice.domain.item.entity.Item;
 import com.project.deliveryservice.domain.order.dto.OrderInfo;
 import com.project.deliveryservice.domain.order.dto.OrderItemRequest;
@@ -24,23 +24,22 @@ import static org.mockito.Mockito.when;
 class OrderServiceTest {
 
     OrderRepository mockOrderRepository;
-    DeliveryRepository mockDeliveryRepository;
-
+    DeliveryService mockDeliveryService;
     UserService mockUserService;
     OrderItemService mockOrderItemService;
 
     OrderService orderService;
 
+    private static final int MAX_ITEM_LIMIT = 999;
+
     @BeforeEach
     void setup() {
         mockOrderRepository = Mockito.mock(OrderRepository.class);
-        mockDeliveryRepository = Mockito.mock(DeliveryRepository.class);
+        mockDeliveryService = Mockito.mock(DeliveryService.class);
         mockUserService = Mockito.mock(UserService.class);
         mockOrderItemService = Mockito.mock(OrderItemService.class);
-        orderService = new OrderService(mockOrderRepository, mockDeliveryRepository, mockUserService, mockOrderItemService);
+        orderService = new OrderService(mockOrderRepository, mockDeliveryService, mockUserService, mockOrderItemService);
     }
-
-    private static final int MAX_ITEM_LIMIT = 999;
 
     Item getItem(long itemId, int price) {
         return new Item(itemId, null, "test", "test", price, false);
