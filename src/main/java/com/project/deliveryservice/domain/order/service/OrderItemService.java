@@ -26,7 +26,7 @@ public class OrderItemService {
         // OrderItemRequest -> OrderItem 생성
         return OrderItem.builder()
                 .price(request.getPrice())
-                .price(request.getQuantity())
+                .quantity(request.getQuantity())
                 .build();
     }
 
