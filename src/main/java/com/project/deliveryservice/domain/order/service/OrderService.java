@@ -34,6 +34,9 @@ public class OrderService {
                 .map(orderItemService::verifyAndCreateFromRequest)
                 .toList();
 
+        // 주문 수량의 합이 MAX_QUANTITY 를 초과하면 에러 던짐
+        orderItemService.throwIfExceedMaxQuantity(orderItems);
+
         // 배달 정보 생성
         Delivery delivery = deliveryService.createDelivery(
                 request.getCity(), request.getStreet(), request.getZipCode()

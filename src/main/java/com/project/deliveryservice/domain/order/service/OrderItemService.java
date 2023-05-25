@@ -7,9 +7,13 @@ import com.project.deliveryservice.domain.order.repository.OrderItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class OrderItemService {
+
+    private final static int MAX_QUANTITY = 999;
 
     private final OrderItemRepository orderItemRepository;
     private final ItemRepository itemRepository;
@@ -24,5 +28,17 @@ public class OrderItemService {
                 .price(request.getPrice())
                 .price(request.getQuantity())
                 .build();
+    }
+
+    public void throwIfExceedMaxQuantity(List<OrderItem> orderItems) {
+        int totalQuantity = getTotalItemQuantity(orderItems);
+        if (totalQuantity > MAX_QUANTITY)
+            throw new IllegalStateException("exceed max quantity");
+    }
+
+    private int getTotalItemQuantity(List<OrderItem> orderItems) {
+        return orderItems.stream()
+                .mapToInt(OrderItem::getQuantity)
+                .sum();
     }
 }
