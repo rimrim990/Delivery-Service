@@ -33,7 +33,7 @@ public class OrderItemService {
     public void throwIfExceedMaxQuantity(List<OrderItem> orderItems) {
         int totalQuantity = getTotalItemQuantity(orderItems);
         if (totalQuantity > MAX_QUANTITY)
-            throw new IllegalStateException("exceed max quantity");
+            throw new IllegalArgumentException("exceed max quantity");
     }
 
     private int getTotalItemQuantity(List<OrderItem> orderItems) {
