@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.security.Key;
 import java.util.List;
 
+import static com.project.deliveryservice.TestUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,23 +26,20 @@ class JwtTokenProviderTest {
     @Value("${jwt.secret}")
     String secret;
 
-    private final String test_email = "test";
-    private final String test_authority = "ROLE_ADMIN";
-
     @Test
     @DisplayName("accessToken 값을 기반으로 생성된 claim 은 토큰과 동일한 값을 갖는다.")
     public void test_01() {
 
-        String jwt = jwtTokenProvider.createAccessToken(test_email, test_authority);
+        String jwt = jwtTokenProvider.createAccessToken(testEmail, testAuthority);
         Key secretKey = JwtUtils.generateKey(secret);
 
         Claims claims = JwtUtils.parseClaimsFromJwt(secretKey, jwt);
 
-        assertThat(claims.getSubject(), equalTo(test_email));
+        assertThat(claims.getSubject(), equalTo(testEmail));
         assertThat(claims.get(AuthConstants.KEY_ROLES), isA(List.class));
         List<String> roles = (List) claims.get(AuthConstants.KEY_ROLES);
         for (String role : roles) {
-            assertThat(role, equalTo(test_authority));
+            assertThat(role, equalTo(testAuthority));
         }
     }
 
@@ -49,15 +47,15 @@ class JwtTokenProviderTest {
     @DisplayName("refreshToken 값을 기반으로 생성된 claim 은 토큰과 동일한 값을 갖는다.")
     public void test_02() {
 
-        String jwt = jwtTokenProvider.createRefreshToken(test_email, test_authority);
+        String jwt = jwtTokenProvider.createRefreshToken(testEmail, testAuthority);
 
         Claims claims = jwtTokenProvider.parseClaimsFromRefreshToken(jwt);
 
-        assertThat(claims.getSubject(), equalTo(test_email));
+        assertThat(claims.getSubject(), equalTo(testEmail));
         assertThat(claims.get(AuthConstants.KEY_ROLES), isA(List.class));
         List<String> roles = (List) claims.get(AuthConstants.KEY_ROLES);
         for (String role : roles) {
-            assertThat(role, equalTo(test_authority));
+            assertThat(role, equalTo(testAuthority));
         }
     }
 
@@ -76,7 +74,7 @@ class JwtTokenProviderTest {
     @DisplayName("refreshToken 에서 claim 추출 시 accessToken 이 들어오면 JwtInvalidException 을 던진다.")
     public void test_04() {
 
-        String accessToken = jwtTokenProvider.createAccessToken(test_email, test_authority);
+        String accessToken = jwtTokenProvider.createAccessToken(testEmail, testAuthority);
 
         Throwable throwable = assertThrows(JwtInvalidException.class, () -> jwtTokenProvider.parseClaimsFromRefreshToken(accessToken));
 

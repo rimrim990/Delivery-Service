@@ -15,7 +15,7 @@ import java.security.Key;
 import java.util.Collections;
 import java.util.Date;
 
-public class JwtUtils {
+public abstract class JwtUtils {
 
     private static final long ONE_SECONDS = 1000;
     private static final long ONE_MINUTE = 60 * ONE_SECONDS;

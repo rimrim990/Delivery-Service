@@ -7,9 +7,7 @@ import com.project.deliveryservice.common.entity.Address;
 import com.project.deliveryservice.common.exception.ErrorMsg;
 import com.project.deliveryservice.domain.auth.dto.LoginRequest;
 import com.project.deliveryservice.domain.auth.dto.RegisterRequest;
-import com.project.deliveryservice.domain.user.dto.UserInfoDto;
-import com.project.deliveryservice.domain.user.entity.Role;
-import com.project.deliveryservice.domain.user.entity.Level;
+import com.project.deliveryservice.domain.user.dto.UserInfo;
 import com.project.deliveryservice.domain.user.entity.User;
 import com.project.deliveryservice.domain.user.repository.UserRepository;
 import com.project.deliveryservice.jwt.JwtInvalidException;
@@ -35,6 +33,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.security.Key;
 import java.util.Optional;
 
+import static com.project.deliveryservice.TestUtils.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -63,10 +62,6 @@ class AuthControllerTest {
     @MockBean
     UserRepository mockUserRepository;
 
-    private final String test_email = "test@google.com";
-    private final String test_password = "1234567890";
-    private final String test_authority = "ROLE_ADMIN";
-
     private Key secretKey;
     private Key refreshSecretKey;
 
@@ -74,27 +69,6 @@ class AuthControllerTest {
     public void setup() {
         secretKey = JwtUtils.generateKey(secret);
         refreshSecretKey = JwtUtils.generateKey(refreshSecret);
-    }
-
-    User getUser(String email, String password, String authority) {
-        Level level = Level.builder()
-                .role(Role.valueOf(authority))
-                .build();
-
-        return User.builder()
-                .email(email)
-                .password(passwordEncoder.encode(password))
-                .level(level)
-                .build();
-    }
-
-    User getDefaultUser(Long id, String email, Address address) {
-        return User.builder()
-                .id(id)
-                .email(email)
-                .address(address)
-                .level(Level.builder().name("고마운분").build())
-                .build();
     }
 
     <T> ApiResponse<T> deserializeApiResponse(String json, Class<T> clazz) throws JsonProcessingException {
@@ -112,20 +86,12 @@ class AuthControllerTest {
         return jsonUtils.serialize(registerRequest);
     }
 
-    private String getAccessToken() {
-        return JwtUtils.createJwtToken(test_email, test_authority, 10, secretKey);
-    }
-
-    private String getRefreshToken() {
-        return JwtUtils.createJwtToken(test_email, test_authority, 30, refreshSecretKey);
-    }
-
     @Test
     @DisplayName("존재하지 않는 사용자 정보로 로그인을 요청하면 Forbidden 상태를 반환한다.")
     public void test_01() throws Exception {
 
-        String requestContent = getLoginRequest(test_email, test_password);
-        when(mockUserRepository.findByEmail(test_email)).thenReturn(Optional.empty());
+        String requestContent = getLoginRequest(testEmail, testPassword);
+        when(mockUserRepository.findByEmail(testEmail)).thenReturn(Optional.empty());
 
         mockMvc.perform(
                 post("/api/auth/login")
@@ -133,14 +99,14 @@ class AuthControllerTest {
                         .contentType("application/json"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("data").value(nullValue()))
-                .andExpect(jsonPath("errorMsg").value(test_email + " is not found"));
+                .andExpect(jsonPath("errorMsg").value(testEmail + " is not found"));
     }
 
     @Test
     @DisplayName("email 이 없으면 400 상태를 반환한다")
     public void test_01_1() throws Exception {
 
-        String requestContent = getLoginRequest(null, test_password);
+        String requestContent = getLoginRequest(null, testPassword);
 
         mockMvc.perform(
                         post("/api/auth/login")
@@ -153,7 +119,7 @@ class AuthControllerTest {
     @DisplayName("로그인 요청 시에 email 이 올바른 형태가 아니면 400 상태를 반환한다")
     public void test_01_2() throws Exception {
 
-        String requestContent = getLoginRequest("test", test_password);
+        String requestContent = getLoginRequest("test", testPassword);
 
         mockMvc.perform(
                         post("/api/auth/login")
@@ -166,7 +132,7 @@ class AuthControllerTest {
     @DisplayName("로그인 요청 시에 비밀번호가 없으면 400 상태를 반환한다")
     public void test_01_3() throws Exception {
 
-        String requestContent = getLoginRequest(test_email, null);
+        String requestContent = getLoginRequest(testEmail, null);
 
         mockMvc.perform(
                         post("/api/auth/login")
@@ -180,9 +146,9 @@ class AuthControllerTest {
     @DisplayName("일치하지 않는 비밀번호로 로그인 요청을 보내면 Forbidden 상태를 반환한다.")
     public void test_02() throws Exception {
 
-        User user = getUser(test_email, test_password, test_authority);
-        String requestContent = getLoginRequest(test_email, "12345");
-        when(mockUserRepository.findByEmail(test_email)).thenReturn(Optional.ofNullable(user));
+        User user = getTestUser(testEmail, passwordEncoder.encode(testPassword), testAuthority);
+        String requestContent = getLoginRequest(testEmail, "12345");
+        when(mockUserRepository.findByEmail(testEmail)).thenReturn(Optional.ofNullable(user));
 
         mockMvc.perform(
                 post("/api/auth/login")
@@ -197,15 +163,15 @@ class AuthControllerTest {
     @DisplayName("유효한 로그인 요청이 들어오면 JwtTokenDto 를 반환한다.")
     public void test_03() throws Exception {
 
-        User user = getUser(test_email, test_password, test_authority);
-        String requestContent = getLoginRequest(test_email, test_password);
-        when(mockUserRepository.findByEmail(test_email)).thenReturn(Optional.ofNullable(user));
+        User user = getTestUser(testEmail, passwordEncoder.encode(testPassword), testAuthority);
+        String requestContent = getLoginRequest(testEmail, testPassword);
+        when(mockUserRepository.findByEmail(testEmail)).thenReturn(Optional.ofNullable(user));
 
-        String accessToken = getAccessToken();
-        String refreshToken = getRefreshToken();
-        when(mockJwtTokenProvider.createAccessToken(test_email, test_authority)).thenReturn(accessToken);
-        when(mockJwtTokenProvider.createRefreshToken(test_email, test_authority)).thenReturn(refreshToken);
-        when(mockJwtTokenProvider.parseClaimsFromRefreshToken(refreshToken)).thenReturn(Jwts.claims().setSubject(test_email));
+        String accessToken = getTestAccessToken(secretKey);
+        String refreshToken = getTestRefreshToken(refreshSecretKey);
+        when(mockJwtTokenProvider.createAccessToken(testEmail, testAuthority)).thenReturn(accessToken);
+        when(mockJwtTokenProvider.createRefreshToken(testEmail, testAuthority)).thenReturn(refreshToken);
+        when(mockJwtTokenProvider.parseClaimsFromRefreshToken(refreshToken)).thenReturn(Jwts.claims().setSubject(testEmail));
 
         MvcResult mvcResult = mockMvc.perform(
                 post("/api/auth/login")
@@ -235,7 +201,7 @@ class AuthControllerTest {
     @DisplayName("토근 재발급시 헤더 토큰이 Bearer 타입이 아니면 Forbidden 상태를 반환한다.")
     public void test_05() throws Exception {
 
-        String refreshToken = getRefreshToken();
+        String refreshToken = getTestRefreshToken(refreshSecretKey);
 
         mockMvc.perform(
                         post("/api/auth/reissue")
@@ -250,15 +216,15 @@ class AuthControllerTest {
     @DisplayName("유효한 refreshToken 을 가지고 토큰 재발급을 요청하면 jwtTokenDto 를 반환한다.")
     public void test_06() throws Exception {
 
-        User user = getUser(test_email, test_password, test_authority);
-        when(mockUserRepository.findByEmail(test_email)).thenReturn(Optional.ofNullable(user));
+        User user = getTestUser(testEmail, testPassword, testAuthority);
+        when(mockUserRepository.findByEmail(testEmail)).thenReturn(Optional.ofNullable(user));
 
-        String accessToken = getAccessToken();
-        String refreshToken = getRefreshToken();
-        when(mockJwtTokenProvider.createAccessToken(test_email, test_authority)).thenReturn(accessToken);
-        when(mockJwtTokenProvider.createRefreshToken(test_email, test_authority)).thenReturn(refreshToken);
+        String accessToken = getTestAccessToken(secretKey);
+        String refreshToken = getTestRefreshToken(refreshSecretKey);
+        when(mockJwtTokenProvider.createAccessToken(testEmail, testAuthority)).thenReturn(accessToken);
+        when(mockJwtTokenProvider.createRefreshToken(testEmail, testAuthority)).thenReturn(refreshToken);
         when(mockJwtTokenProvider.parseClaimsFromRefreshToken(refreshToken))
-                .thenReturn(Jwts.claims().setSubject(test_email));
+                .thenReturn(Jwts.claims().setSubject(testEmail));
 
         MvcResult mvcResult = mockMvc.perform(
                 post("/api/auth/reissue")
@@ -278,9 +244,9 @@ class AuthControllerTest {
     @DisplayName("토큰 재발급시 accessToken 이 주어지면 Forbidden 상태를 반환한다.")
     public void test_07() throws Exception {
 
-        String accessToken = getAccessToken();
-        User user = getUser(test_email, test_password, test_authority);
-        when(mockUserRepository.findByEmail(test_email)).thenReturn(Optional.ofNullable(user));
+        String accessToken = getTestAccessToken(secretKey);
+        User user = getTestUser(testEmail, testPassword, testAuthority);
+        when(mockUserRepository.findByEmail(testEmail)).thenReturn(Optional.ofNullable(user));
         when(mockJwtTokenProvider.parseClaimsFromRefreshToken(accessToken))
                 .thenThrow(new JwtInvalidException(ErrorMsg.DIFFERENT_SIGNATURE_KEY));
 
@@ -298,7 +264,7 @@ class AuthControllerTest {
     public void test_08() throws Exception {
 
         // given
-        String request = getRegisterRequest(null, test_password,
+        String request = getRegisterRequest(null, testPassword,
                 "123", "seoul", "songpa", "12345");
 
         // when
@@ -316,7 +282,7 @@ class AuthControllerTest {
     @DisplayName("회원가입 시에 email 이 이메일 형태를 갖지 않으면 400 상태를 반환한다.")
     public void test_08_1() throws Exception {
 
-        String request = getRegisterRequest("test", test_password,
+        String request = getRegisterRequest("test", testPassword,
                 "123", "seoul", "songpa", "12345");
 
         mockMvc.perform(
@@ -334,7 +300,7 @@ class AuthControllerTest {
     @DisplayName("회원가입 시에 username 이 없으면 400 상태를 반환한다.")
     public void test_08_2() throws Exception {
 
-        String request = getRegisterRequest(test_email, test_password,
+        String request = getRegisterRequest(testEmail, testPassword,
                 null, "seoul", "songpa", "12345");
 
         mockMvc.perform(
@@ -352,7 +318,7 @@ class AuthControllerTest {
     @DisplayName("회원가입 시에 username 이 너무 짧으면 400 상태를 반환한다.")
     public void test_08_3() throws Exception {
 
-        String request = getRegisterRequest(test_email, test_password,
+        String request = getRegisterRequest(testEmail, testPassword,
                 "12", "seoul", "songpa", "12345");
 
         mockMvc.perform(
@@ -370,7 +336,7 @@ class AuthControllerTest {
     @DisplayName("회원가입 시에 username 이 너무 길면 400 상태를 반환한다.")
     public void test_08_4() throws Exception {
 
-        String request = getRegisterRequest(test_email, test_password,
+        String request = getRegisterRequest(testEmail, testPassword,
                 "123456789101112131415", "seoul", "songpa", "12345");
 
         mockMvc.perform(
@@ -388,7 +354,7 @@ class AuthControllerTest {
     @DisplayName("회원가입 시에 주소 값이 완전하지 않을 경우 400 상태를 반환한다.")
     public void test_08_5() throws Exception {
 
-        String request = getRegisterRequest(test_email, test_password,
+        String request = getRegisterRequest(testEmail, testPassword,
                 "123", "seoul", null, "12345");
 
         mockMvc.perform(
@@ -406,7 +372,7 @@ class AuthControllerTest {
     @DisplayName("회원가입 시에 주소 값의 zipcode 가 숫자 포맷이 아닐 경우 400 상태를 반환한다.")
     public void test_08_6() throws Exception {
 
-        String request = getRegisterRequest(test_email, test_password,
+        String request = getRegisterRequest(testEmail, testPassword,
                 "123", "seoul",  "songpa", "12345a");
 
         mockMvc.perform(
@@ -425,12 +391,12 @@ class AuthControllerTest {
     public void test_09() throws Exception {
 
         // given
-        String request = getRegisterRequest(test_email, test_password, "test",
+        String request = getRegisterRequest(testEmail, testPassword, "test",
                 "seoul", "songpa" , "12345");
-        User user = getDefaultUser(1L, test_email, new Address("seoul", "songpa", "12345"));
+        User user = getDefaultTestUser(1L, testEmail, new Address("seoul", "songpa", "12345"));
 
         // when
-        when(mockUserRepository.findByEmail(test_email)).thenReturn(Optional.ofNullable(user));
+        when(mockUserRepository.findByEmail(testEmail)).thenReturn(Optional.ofNullable(user));
         mockMvc.perform(
                 post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -438,7 +404,7 @@ class AuthControllerTest {
         )
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("data").value(nullValue()))
-                .andExpect(jsonPath("errorMsg").value(test_email + ErrorMsg.DUPLICATED))
+                .andExpect(jsonPath("errorMsg").value(testEmail + ErrorMsg.DUPLICATED))
                 .andReturn();
     }
 
@@ -447,10 +413,10 @@ class AuthControllerTest {
     public void test_10() throws Exception {
 
         // given
-        String request = getRegisterRequest(test_email, test_password, "test",
+        String request = getRegisterRequest(testEmail, testPassword, "test",
                 "seoul", "songpa" , "12345");
         Address address = new Address("seoul", "songpa", "012345");
-        User user = getDefaultUser(1L, "test@gmail.com", address);
+        User user = getDefaultTestUser(1L, "test@gmail.com", address);
 
         // when
         when(mockUserRepository.save(any())).thenReturn(user);
@@ -462,7 +428,7 @@ class AuthControllerTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        ApiResponse<UserInfoDto> res = deserializeApiResponse(mvcResult.getResponse().getContentAsString(), UserInfoDto.class);
+        ApiResponse<UserInfo> res = deserializeApiResponse(mvcResult.getResponse().getContentAsString(), UserInfo.class);
         assertThat(res.getErrorMsg(), is(nullValue()));
         assertThat(res.getData().getAddress(), equalTo(address.toString()));
         assertThat(res.getData().getEmail(), equalTo("test@gmail.com"));

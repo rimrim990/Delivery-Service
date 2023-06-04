@@ -8,7 +8,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 @Builder
-public class UserInfoDto {
+public class UserInfo {
 
     private long id;
 
@@ -18,8 +18,8 @@ public class UserInfoDto {
 
     private String level;
 
-    public static UserInfoDto of(User source) {
-        return UserInfoDto.builder()
+    public static UserInfo of(User source) {
+        return UserInfo.builder()
                 .id(source.getId())
                 .email(source.getEmail())
                 .address(source.getAddress().toString())
